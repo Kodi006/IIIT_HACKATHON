@@ -1,0 +1,8 @@
+streamlit
+pillow
+pytesseract
+sentence-transformers
+faiss-cpu
+openai
+transformers   # optional if you run a local transformer model
+tqdm
