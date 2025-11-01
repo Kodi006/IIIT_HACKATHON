@@ -24,6 +24,10 @@ import base64
 from io import BytesIO
 from typing import List, Dict, Any
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 from PIL import Image
 import pytesseract
 import streamlit as st
@@ -34,10 +38,6 @@ from tqdm import tqdm
 
 import openai
 
-#... after your other imports
-import torch
-import transformers
-from transformers import AutoTokenizer, AutoModelForCausalLM
 ########################
 # Configuration
 ########################
@@ -164,9 +164,12 @@ def retrieve_from_index(query: str, embedder: SentenceTransformer, index, id_map
 ########################
 
 from openai import OpenAI
-client = OpenAI()
+client = None  # Will be initialized only when needed
 
 def call_openai_chat(system_prompt, user_prompt, max_tokens=512, temperature=0.7):
+    global client
+    if client is None:
+        client = OpenAI()
     response = client.chat.completions.create(
         model="gpt-4o-mini",  # or gpt-4o, gpt-4-turbo etc.
         messages=[
@@ -185,127 +188,256 @@ def call_local_stub(system_prompt: str, user_prompt: str, max_tokens: int = 512,
     Deterministic local stub for offline demo. It does NOT do real clinical reasoning.
     Replace with local LLM inference (transformers, ggml, etc.) in your final.
     """
-    # Very simple heuristics for demo:
-    # - If "SOAP" in system_prompt -> return short SOAP with bits of user_prompt
-    # - If "Step 1" (extract facts) -> extract lines starting with '[' which contain chunk ids
-    # - If "Step 2" produce fake ddx using keywords
-    if "SOAP" in system_prompt.upper() or "summarizer" in system_prompt.lower():
-        # try to create a tiny SOAP by picking sentences
-        text = user_prompt
-        s = text.strip().split(".")
-        subj = s[0] if s else ""
-        return f"S: {subj.strip()}\nO: N/A\nA: N/A\nP: N/A"
-    if "extract" in system_prompt.lower() or "step 1" in system_prompt.lower():
-        # very naive: find lines with 'fever', 'headache', 'nuchal' etc
-        out = []
-        lowered = user_prompt.lower()
-        out.append("1. Patient History & Demographics:\n- N/A")
-        symptoms = []
-        if "fever" in lowered:
-            symptoms.append("- Fever (from note) [evidence: CHUNK_FEVER]")
-        if "headache" in lowered:
-            symptoms.append("- Headache [evidence: CHUNK_HEAD]")
-        if "neck stiffness" in lowered or "nuchal rigidity" in lowered:
-            symptoms.append("- Nuchal rigidity / neck stiffness [evidence: CHUNK_NECK]")
-        if not symptoms:
-            symptoms = ["- N/A"]
-        out.append("2. Chief Complaint & Symptoms:\n" + "\n".join(symptoms))
-        out.append("3. Physical Exam & Vitals:\n- N/A")
-        out.append("4. Key Lab & Imaging Findings:\n- N/A")
-        out.append("5. Clinician's Stated Assessment:\n- N/A")
-        return "\n\n".join(out)
-    if "differential" in system_prompt.lower() or "step 2" in system_prompt.lower():
-        # create a small JSON
-        ddx = [
-            {
-                "diagnosis": "Meningitis",
-                "confidence": "High" if "CHUNK_NECK" in user_prompt or "CHUNK_FEVER" in user_prompt else "Medium",
-                "rationale": "Fever + neck stiffness/headache are classic for meningitis.",
-                "evidence": ["CHUNK_FEVER", "CHUNK_NECK"]
-            },
-            {
+    # Extract chunk information from user_prompt
+    lowered = user_prompt.lower()
+    
+    # Helper function to extract chunk IDs from context
+    def extract_chunk_ids(text, keyword):
+        """Extract chunk IDs that contain a specific keyword"""
+        chunks = []
+        lines = text.split('\n')
+        for line in lines:
+            if keyword in line.lower() and '[' in line:
+                # Extract chunk_id from [chunk_id][section]: text format
+                try:
+                    chunk_id = line.split('[')[1].split(']')[0]
+                    chunks.append(chunk_id)
+                except:
+                    pass
+        return chunks[:2]  # Return up to 2 chunk IDs
+    
+    # Step 2: Differential Diagnosis (check this FIRST before Step 1)
+    # Step 2 asks for "differential diagnoses as a JSON array"
+    if ("differential diagnoses" in lowered or "json array" in lowered or 
+        "step1_output" in lowered or "reasoning engine" in system_prompt.lower()):
+        # Extract relevant chunk IDs from the step1 output
+        has_fever = "fever" in lowered
+        has_neck = "neck" in lowered or "nuchal" in lowered
+        has_headache = "headache" in lowered
+        has_meningeal = "meningeal" in lowered or "kernig" in lowered or "brudzinski" in lowered
+        
+        ddx = []
+        
+        # Meningitis - if classic triad present
+        if (has_fever and has_neck and has_headache) or has_meningeal:
+            confidence = "High"
+            evidence_chunks = []
+            # Try to extract actual chunk IDs from the user_prompt
+            for keyword in ["fever", "neck", "nuchal", "headache", "meningeal"]:
+                chunks = extract_chunk_ids(user_prompt, keyword)
+                evidence_chunks.extend(chunks)
+            evidence_chunks = list(set(evidence_chunks))[:3]  # Unique, max 3
+            
+            if not evidence_chunks:
+                evidence_chunks = ["FEVER_CHUNK", "NECK_CHUNK", "HEAD_CHUNK"]
+                
+            ddx.append({
+                "diagnosis": "Bacterial Meningitis",
+                "confidence": confidence,
+                "rationale": "Classic triad of fever, severe headache, and nuchal rigidity with positive meningeal signs. Elevated inflammatory markers support bacterial etiology.",
+                "evidence": evidence_chunks
+            })
+        
+        # Migraine - if headache present
+        if has_headache:
+            headache_chunks = extract_chunk_ids(user_prompt, "headache") or ["HEAD_CHUNK"]
+            ddx.append({
                 "diagnosis": "Migraine",
                 "confidence": "Medium",
-                "rationale": "Headache without focal neurological deficits can be migraine.",
-                "evidence": ["CHUNK_HEAD"]
-            },
-            {
+                "rationale": "Severe headache with photophobia can present as migraine, though fever makes this less likely.",
+                "evidence": headache_chunks[:2]
+            })
+        
+        # Subarachnoid Hemorrhage - always consider in severe headache
+        if has_headache:
+            ddx.append({
                 "diagnosis": "Subarachnoid Hemorrhage",
                 "confidence": "Low",
-                "rationale": "Severe sudden headache could indicate SAH; further imaging required.",
-                "evidence": []
-            }
-        ]
-        return json.dumps(ddx, indent=2)
+                "rationale": "Sudden severe headache warrants consideration of SAH. Requires CT head and/or LP if imaging negative.",
+                "evidence": extract_chunk_ids(user_prompt, "headache")[:1] or []
+            })
+        
+        # Encephalitis - if fever + neurological
+        if has_fever and (has_headache or "confusion" in lowered or "altered" in lowered):
+            ddx.append({
+                "diagnosis": "Viral Encephalitis",
+                "confidence": "Medium",
+                "rationale": "Fever with neurological symptoms can indicate encephalitis. CSF analysis and MRI brain indicated.",
+                "evidence": extract_chunk_ids(user_prompt, "fever")[:1] or []
+            })
+        
+        # Ensure we have at least some diagnoses
+        if not ddx:
+            ddx = [
+                {
+                    "diagnosis": "Undifferentiated Febrile Illness",
+                    "confidence": "Medium",
+                    "rationale": "Clinical presentation requires further diagnostic workup.",
+                    "evidence": []
+                }
+            ]
+        
+        return json.dumps(ddx[:3], indent=2)  # Return top 3
+    
+    # SOAP Note Generation
+    if "SOAP" in system_prompt.upper() or "summarizer" in system_prompt.lower():
+        subjective = []
+        objective = []
+        assessment = []
+        plan = []
+        
+        # Extract key information from context
+        if "fever" in lowered:
+            subjective.append("Fever")
+        if "headache" in lowered:
+            subjective.append("severe headache")
+        if "neck stiffness" in lowered or "nuchal rigidity" in lowered:
+            subjective.append("neck stiffness")
+        if "nausea" in lowered or "vomiting" in lowered:
+            subjective.append("nausea/vomiting")
+        if "photophobia" in lowered:
+            subjective.append("photophobia")
+            
+        # Look for vital signs and physical exam
+        if "temp" in lowered or "°f" in lowered or "fever" in lowered:
+            objective.append("Elevated temperature")
+        if "nuchal rigidity" in lowered or "kernig" in lowered or "brudzinski" in lowered:
+            objective.append("Positive meningeal signs")
+        if "wbc" in lowered or "white blood cell" in lowered:
+            objective.append("Elevated WBC")
+            
+        # Assessment based on context
+        if "meningitis" in lowered:
+            assessment.append("Concerning for bacterial meningitis")
+        elif "fever" in lowered and ("headache" in lowered or "neck" in lowered):
+            assessment.append("Fever with neurological symptoms")
+            
+        # Plan extraction
+        if "lp" in lowered or "lumbar puncture" in lowered or "csf" in lowered:
+            plan.append("Lumbar puncture for CSF analysis")
+        if "antibiotic" in lowered or "ceftriaxone" in lowered or "vancomycin" in lowered:
+            plan.append("Empiric antibiotics")
+        if "icu" in lowered or "admit" in lowered:
+            plan.append("ICU admission for monitoring")
+            
+        # Format SOAP note
+        s_text = ", ".join(subjective) if subjective else "Patient presents with acute symptoms"
+        o_text = "; ".join(objective) if objective else "Vital signs abnormal, physical exam significant"
+        a_text = assessment[0] if assessment else "Clinical picture requires urgent evaluation"
+        p_text = ", ".join(plan) if plan else "Further workup and treatment indicated"
+        
+        return f"S: {s_text}\nO: {o_text}\nA: {a_text}\nP: {p_text}"
+    
+    # Step 1: Extract Structured Facts
+    if "extract" in system_prompt.lower() or "extractor" in system_prompt.lower():
+        out = []
+        
+        # 1. Patient History & Demographics
+        demographics = []
+        if "year" in lowered and "old" in lowered:
+            # Try to extract age
+            import re
+            age_match = re.search(r'(\d+)[- ]year[s]?[- ]old', lowered)
+            if age_match:
+                demographics.append(f"- Age: {age_match.group(1)} years")
+        if "male" in lowered:
+            demographics.append("- Sex: Male")
+        elif "female" in lowered:
+            demographics.append("- Sex: Female")
+        if not demographics:
+            demographics = ["- Not specified"]
+        out.append("1. Patient History & Demographics:\n" + "\n".join(demographics))
+        
+        # 2. Chief Complaint & Symptoms
+        symptoms = []
+        fever_chunks = extract_chunk_ids(user_prompt, "fever")
+        if fever_chunks:
+            symptoms.append(f"- Fever [evidence: {fever_chunks[0]}]")
+        
+        headache_chunks = extract_chunk_ids(user_prompt, "headache")
+        if headache_chunks:
+            symptoms.append(f"- Severe headache [evidence: {headache_chunks[0]}]")
+            
+        neck_chunks = extract_chunk_ids(user_prompt, "neck") or extract_chunk_ids(user_prompt, "nuchal")
+        if neck_chunks:
+            symptoms.append(f"- Neck stiffness/nuchal rigidity [evidence: {neck_chunks[0]}]")
+            
+        if "photophobia" in lowered:
+            photo_chunks = extract_chunk_ids(user_prompt, "photophobia")
+            symptoms.append(f"- Photophobia [evidence: {photo_chunks[0] if photo_chunks else 'CLINICAL'}]")
+            
+        if "nausea" in lowered or "vomiting" in lowered:
+            gi_chunks = extract_chunk_ids(user_prompt, "nausea") or extract_chunk_ids(user_prompt, "vomiting")
+            symptoms.append(f"- Nausea/vomiting [evidence: {gi_chunks[0] if gi_chunks else 'CLINICAL'}]")
+            
+        if not symptoms:
+            symptoms = ["- No specific symptoms extracted"]
+        out.append("2. Chief Complaint & Symptoms:\n" + "\n".join(symptoms))
+        
+        # 3. Physical Exam & Vitals
+        exam = []
+        if "temp" in lowered or "°f" in lowered:
+            temp_chunks = extract_chunk_ids(user_prompt, "temp") or extract_chunk_ids(user_prompt, "°f")
+            exam.append(f"- Elevated temperature [evidence: {temp_chunks[0] if temp_chunks else 'VITALS'}]")
+            
+        if "nuchal rigidity" in lowered or "kernig" in lowered or "brudzinski" in lowered:
+            meningeal_chunks = extract_chunk_ids(user_prompt, "nuchal") or extract_chunk_ids(user_prompt, "kernig")
+            exam.append(f"- Positive meningeal signs [evidence: {meningeal_chunks[0] if meningeal_chunks else 'PHYSICAL'}]")
+            
+        if "hr" in lowered or "heart rate" in lowered or "bpm" in lowered:
+            vital_chunks = extract_chunk_ids(user_prompt, "hr") or extract_chunk_ids(user_prompt, "bpm")
+            exam.append(f"- Tachycardia noted [evidence: {vital_chunks[0] if vital_chunks else 'VITALS'}]")
+            
+        if not exam:
+            exam = ["- Physical examination findings in note"]
+        out.append("3. Physical Exam & Vitals:\n" + "\n".join(exam))
+        
+        # 4. Key Lab & Imaging Findings
+        labs = []
+        if "wbc" in lowered or "white blood cell" in lowered:
+            wbc_chunks = extract_chunk_ids(user_prompt, "wbc") or extract_chunk_ids(user_prompt, "white blood")
+            labs.append(f"- Elevated WBC count [evidence: {wbc_chunks[0] if wbc_chunks else 'LABS'}]")
+            
+        if "neutrophil" in lowered:
+            neut_chunks = extract_chunk_ids(user_prompt, "neutrophil")
+            labs.append(f"- Neutrophilia [evidence: {neut_chunks[0] if neut_chunks else 'LABS'}]")
+            
+        if "crp" in lowered or "c-reactive" in lowered:
+            crp_chunks = extract_chunk_ids(user_prompt, "crp")
+            labs.append(f"- Elevated CRP [evidence: {crp_chunks[0] if crp_chunks else 'LABS'}]")
+            
+        if not labs:
+            labs = ["- Laboratory values available in note"]
+        out.append("4. Key Lab & Imaging Findings:\n" + "\n".join(labs))
+        
+        # 5. Clinician's Stated Assessment
+        assessment = []
+        if "meningitis" in lowered:
+            assess_chunks = extract_chunk_ids(user_prompt, "meningitis")
+            assessment.append(f"- Concerning for bacterial meningitis [evidence: {assess_chunks[0] if assess_chunks else 'ASSESSMENT'}]")
+        elif "assessment" in lowered:
+            assess_chunks = extract_chunk_ids(user_prompt, "assessment")
+            assessment.append(f"- Clinical assessment documented [evidence: {assess_chunks[0] if assess_chunks else 'ASSESSMENT'}]")
+        else:
+            assessment = ["- Assessment requires clinical correlation"]
+        out.append("5. Clinician's Stated Assessment:\n" + "\n".join(assessment))
+        
+        return "\n\n".join(out)
+    
     # fallback
     return "LOCAL_STUB_RESPONSE"
+
 def call_llm(system_prompt: str, user_prompt: str, max_tokens: int = 512, temperature: float = 0.0):
+    """
+    Call the appropriate LLM based on LLM_MODE setting.
+    Modes: 'openai' (requires API key) or 'local_stub' (demo mode, no downloads needed)
+    """
     if LLM_MODE == "openai":
         return call_openai_chat(system_prompt, user_prompt, max_tokens=max_tokens, temperature=temperature)
-    elif LLM_MODE == "local_transformers":
-        return call_local_transformers(system_prompt, user_prompt, max_tokens=max_tokens, temperature=temperature)
     else:
-        # Default to the local_stub
+        # Default to the local_stub (lightweight, no downloads)
         return call_local_stub(system_prompt, user_prompt, max_tokens=max_tokens, temperature=temperature)
-@st.cache_resource(show_spinner="Loading local LLM (Llama 3.1 8B)...")
-def load_local_model_pipeline():
-    """
-    Loads the quantized Llama 3.1 8B model and tokenizer.
-    Uses 4-bit quantization to fit on consumer GPUs.
-    """
-    model_id = "TsinghuaC3I/Llama-3-8B-UltraMedical" #
-    
-    # Load tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-    
-    # Load model with 4-bit quantization
-    pipeline = transformers.pipeline(
-        "text-generation",
-        model=model_id,
-        model_kwargs={
-            "torch_dtype": torch.bfloat16,  #
-            "quantization_config": {"load_in_4bit": True},  #
-            "low_cpu_mem_usage": True,  #
-        },
-        device_map="auto",  #
-    )
-    
-    # Define terminators to stop generation cleanly
-    terminators = [
-        pipeline.tokenizer.eos_token_id,
-        pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>")
-    ]
-    
-    return pipeline, terminators
 
-def call_local_transformers(system_prompt: str, user_prompt: str, max_tokens: int = 512, temperature: float = 0.0) -> str:
-    """
-    Calls the locally loaded Llama 3.1 model.
-    """
-    try:
-        pipeline, terminators = load_local_model_pipeline()
-        
-        messages ={"role": "user", "content": user_prompt}, 
-        
-        # Use a temperature slightly > 0 for stability
-        temp = max(temperature, 0.01)
-
-        outputs = pipeline(
-            messages,
-            max_new_tokens=max_tokens,
-            eos_token_id=terminators,
-            do_sample=True,
-            temperature=temp,
-            pad_token_id=pipeline.tokenizer.eos_token_id
-        )
-        
-        # Extract only the newly generated text (the assistant's reply)
-        response_message = outputs["generated_text"][-1]
-        return response_message.get("content", "ERROR: No content generated.")
-
-    except Exception as e:
-        st.error(f"Local LLM Error: {e}")
-        return f"ERROR: Could not run local model. Ensure you have a GPU and are logged in to Hugging Face (huggingface-cli login). Error: {e}"
 ########################
 # RAG pipeline: retrieval + two-step reasoning
 ########################
@@ -416,10 +548,45 @@ left, right = st.columns([0.45, 0.55])
 with left:
     st.header("Input")
     input_mode = st.radio("Input type", ["Typed note", "Upload image (photo/scanned note)"])
+    
+    # Sample clinical note for testing
+    sample_note = """CHIEF COMPLAINT: Fever, headache, and neck stiffness for 3 days.
+
+HISTORY OF PRESENT ILLNESS:
+Patient is a 35-year-old male presenting to the emergency department with a 3-day history of progressively worsening fever (up to 102.5°F), severe headache, and neck stiffness. He reports photophobia and nausea with one episode of vomiting. Denies recent head trauma, sick contacts, or travel. No similar episodes in the past.
+
+PAST MEDICAL HISTORY:
+- No significant past medical history
+- No chronic medications
+- No known drug allergies
+
+PHYSICAL EXAMINATION:
+- Vitals: Temp 101.8°F, HR 110 bpm, BP 128/82 mmHg, RR 18, O2 sat 98% on room air
+- General: Appears ill, in moderate distress
+- HEENT: Pupils equal and reactive, photophobia noted
+- Neck: Positive nuchal rigidity, Kernig's and Brudzinski's signs positive
+- Neurological: Alert and oriented x3, no focal neurological deficits
+- Skin: No rash observed
+
+LABORATORY:
+- WBC: 15,200/μL (elevated)
+- Neutrophils: 82% (elevated)
+- CRP: 45 mg/L (elevated)
+
+ASSESSMENT:
+Clinical presentation highly concerning for bacterial meningitis given fever, severe headache, nuchal rigidity, and positive meningeal signs.
+
+PLAN:
+- Urgent LP for CSF analysis
+- Start empiric IV antibiotics (ceftriaxone + vancomycin)
+- CT head if LP delayed
+- Admit to ICU for close monitoring
+- Infectious disease consult"""
+    
     note_text = ""
     uploaded_image_bytes = None
     if input_mode == "Typed note":
-        note_text = st.text_area("Paste / type the clinical note here", height=420)
+        note_text = st.text_area("Paste / type the clinical note here", value=sample_note, height=420)
     else:
         uploaded_file = st.file_uploader("Upload image (jpg/png/pdf pages)", type=["png", "jpg", "jpeg", "pdf"])
         if uploaded_file is not None:
@@ -453,10 +620,11 @@ with left:
     st.markdown("---")
     st.write("LLM & Retrieval Options")
     llm_mode_select = st.selectbox(
-    "LLM mode", 
-    ["local_stub", "local_transformers", "openai"], 
-    index=0  # Default to local_stub
-)
+        "LLM mode", 
+        ["local_stub", "openai"], 
+        index=0,  # Default to local_stub
+        help="local_stub: Demo mode (no API needed) | openai: GPT models (requires API key)"
+    )
     use_custom_embed = st.checkbox("Use smaller embedder (faster demo)", value=False)
     top_k = st.slider("Number of chunks to retrieve (k)", min_value=3, max_value=12, value=6)
 
