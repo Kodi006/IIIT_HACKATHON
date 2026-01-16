@@ -197,11 +197,17 @@ def call_local_stub(system_prompt: str, user_prompt: str, max_tokens: int = 512,
         chunks = []
         lines = text.split('\n')
         for line in lines:
-            if keyword in line.lower() and '[' in line:
+            if keyword in line.lower() and '[' in line and ']' in line:
                 # Extract chunk_id from [chunk_id][section]: text format
                 try:
-                    chunk_id = line.split('[')[1].split(']')[0]
-                    chunks.append(chunk_id)
+                    # Find the first [...]  which should be the chunk_id
+                    start = line.find('[')
+                    end = line.find(']', start)
+                    if start != -1 and end != -1:
+                        chunk_id = line[start+1:end]
+                        # Skip if it's "evidence:" or other metadata
+                        if chunk_id and not chunk_id.startswith('evidence') and '_' in chunk_id:
+                            chunks.append(chunk_id)
                 except:
                     pass
         return chunks[:2]  # Return up to 2 chunk IDs
@@ -210,72 +216,151 @@ def call_local_stub(system_prompt: str, user_prompt: str, max_tokens: int = 512,
     # Step 2 asks for "differential diagnoses as a JSON array"
     if ("differential diagnoses" in lowered or "json array" in lowered or 
         "step1_output" in lowered or "reasoning engine" in system_prompt.lower()):
-        # Extract relevant chunk IDs from the step1 output
-        has_fever = "fever" in lowered
-        has_neck = "neck" in lowered or "nuchal" in lowered
+        
+        # Extract key clinical features
+        has_fever = any(word in lowered for word in ["fever", "febrile", "temperature"])
+        has_chest_pain = any(word in lowered for word in ["chest pain", "chest discomfort"])
+        has_sob = any(word in lowered for word in ["shortness of breath", "dyspnea", "sob"])
+        has_cough = "cough" in lowered
         has_headache = "headache" in lowered
-        has_meningeal = "meningeal" in lowered or "kernig" in lowered or "brudzinski" in lowered
+        has_neck = any(word in lowered for word in ["neck stiffness", "nuchal"])
+        has_meningeal = any(word in lowered for word in ["meningeal", "kernig", "brudzinski"])
+        has_abd_pain = any(word in lowered for word in ["abdominal pain", "belly pain", "stomach pain"])
+        has_nausea = any(word in lowered for word in ["nausea", "vomiting"])
+        has_confusion = any(word in lowered for word in ["confusion", "altered", "disoriented"])
+        has_elevated_wbc = "wbc" in lowered or "white blood" in lowered
+        has_troponin = "troponin" in lowered
         
         ddx = []
         
-        # Meningitis - if classic triad present
+        # Meningitis pattern
         if (has_fever and has_neck and has_headache) or has_meningeal:
-            confidence = "High"
             evidence_chunks = []
-            # Try to extract actual chunk IDs from the user_prompt
             for keyword in ["fever", "neck", "nuchal", "headache", "meningeal"]:
                 chunks = extract_chunk_ids(user_prompt, keyword)
                 evidence_chunks.extend(chunks)
-            evidence_chunks = list(set(evidence_chunks))[:3]  # Unique, max 3
+            evidence_chunks = list(set(evidence_chunks))[:3]
             
-            if not evidence_chunks:
-                evidence_chunks = ["FEVER_CHUNK", "NECK_CHUNK", "HEAD_CHUNK"]
-                
             ddx.append({
                 "diagnosis": "Bacterial Meningitis",
-                "confidence": confidence,
-                "rationale": "Classic triad of fever, severe headache, and nuchal rigidity with positive meningeal signs. Elevated inflammatory markers support bacterial etiology.",
-                "evidence": evidence_chunks
+                "confidence": "High",
+                "rationale": "Classic triad of fever, severe headache, and nuchal rigidity with positive meningeal signs.",
+                "evidence": evidence_chunks if evidence_chunks else ["CLINICAL"]
             })
         
-        # Migraine - if headache present
-        if has_headache:
-            headache_chunks = extract_chunk_ids(user_prompt, "headache") or ["HEAD_CHUNK"]
+        # Pneumonia pattern
+        if has_fever and (has_cough or has_sob) and has_elevated_wbc:
+            evidence_chunks = []
+            for keyword in ["fever", "cough", "breath", "wbc"]:
+                chunks = extract_chunk_ids(user_prompt, keyword)
+                evidence_chunks.extend(chunks)
+            evidence_chunks = list(set(evidence_chunks))[:3]
+            
             ddx.append({
-                "diagnosis": "Migraine",
+                "diagnosis": "Community-Acquired Pneumonia",
+                "confidence": "High",
+                "rationale": "Fever with respiratory symptoms and leukocytosis suggests bacterial pneumonia. Chest X-ray indicated.",
+                "evidence": evidence_chunks if evidence_chunks else ["CLINICAL"]
+            })
+        
+        # Myocardial Infarction pattern
+        if has_chest_pain and (has_troponin or has_sob):
+            evidence_chunks = []
+            for keyword in ["chest", "pain", "troponin"]:
+                chunks = extract_chunk_ids(user_prompt, keyword)
+                evidence_chunks.extend(chunks)
+            evidence_chunks = list(set(evidence_chunks))[:3]
+            
+            ddx.append({
+                "diagnosis": "Acute Myocardial Infarction",
+                "confidence": "High",
+                "rationale": "Chest pain with elevated troponin or associated symptoms concerning for acute MI. Urgent cardiology consultation needed.",
+                "evidence": evidence_chunks if evidence_chunks else ["CLINICAL"]
+            })
+        
+        # Sepsis pattern
+        if has_fever and has_elevated_wbc and (has_confusion or "hypotension" in lowered):
+            evidence_chunks = []
+            for keyword in ["fever", "wbc", "confusion", "pressure"]:
+                chunks = extract_chunk_ids(user_prompt, keyword)
+                evidence_chunks.extend(chunks)
+            evidence_chunks = list(set(evidence_chunks))[:3]
+            
+            ddx.append({
+                "diagnosis": "Sepsis",
+                "confidence": "High",
+                "rationale": "Fever with leukocytosis and altered mental status or hemodynamic instability concerning for sepsis. Requires urgent management.",
+                "evidence": evidence_chunks if evidence_chunks else ["CLINICAL"]
+            })
+        
+        # Acute Abdomen pattern
+        if has_abd_pain and (has_fever or has_nausea or has_elevated_wbc):
+            evidence_chunks = []
+            for keyword in ["abdominal", "pain", "nausea"]:
+                chunks = extract_chunk_ids(user_prompt, keyword)
+                evidence_chunks.extend(chunks)
+            evidence_chunks = list(set(evidence_chunks))[:3]
+            
+            ddx.append({
+                "diagnosis": "Acute Abdomen (Appendicitis/Cholecystitis)",
                 "confidence": "Medium",
-                "rationale": "Severe headache with photophobia can present as migraine, though fever makes this less likely.",
-                "evidence": headache_chunks[:2]
+                "rationale": "Abdominal pain with systemic symptoms warrants imaging to evaluate for surgical abdomen.",
+                "evidence": evidence_chunks if evidence_chunks else ["CLINICAL"]
             })
         
-        # Subarachnoid Hemorrhage - always consider in severe headache
-        if has_headache:
+        # Stroke pattern
+        if has_confusion or "weakness" in lowered or "numbness" in lowered:
+            evidence_chunks = []
+            for keyword in ["confusion", "weakness", "numbness", "neurological"]:
+                chunks = extract_chunk_ids(user_prompt, keyword)
+                evidence_chunks.extend(chunks)
+            evidence_chunks = list(set(evidence_chunks))[:3]
+            
             ddx.append({
-                "diagnosis": "Subarachnoid Hemorrhage",
-                "confidence": "Low",
-                "rationale": "Sudden severe headache warrants consideration of SAH. Requires CT head and/or LP if imaging negative.",
-                "evidence": extract_chunk_ids(user_prompt, "headache")[:1] or []
-            })
-        
-        # Encephalitis - if fever + neurological
-        if has_fever and (has_headache or "confusion" in lowered or "altered" in lowered):
-            ddx.append({
-                "diagnosis": "Viral Encephalitis",
+                "diagnosis": "Cerebrovascular Accident (Stroke)",
                 "confidence": "Medium",
-                "rationale": "Fever with neurological symptoms can indicate encephalitis. CSF analysis and MRI brain indicated.",
-                "evidence": extract_chunk_ids(user_prompt, "fever")[:1] or []
+                "rationale": "Acute neurological symptoms require urgent imaging to evaluate for stroke. Time-sensitive intervention may be needed.",
+                "evidence": evidence_chunks if evidence_chunks else ["CLINICAL"]
             })
         
-        # Ensure we have at least some diagnoses
+        # Headache differential (if headache without meningeal signs)
+        if has_headache and not (has_meningeal or has_neck):
+            headache_chunks = extract_chunk_ids(user_prompt, "headache")
+            ddx.append({
+                "diagnosis": "Migraine or Tension Headache",
+                "confidence": "Medium",
+                "rationale": "Headache without focal neurological deficits or meningeal signs. Consider primary headache disorder.",
+                "evidence": headache_chunks[:2] if headache_chunks else ["CLINICAL"]
+            })
+        
+        # Generic fallback if no specific patterns matched
         if not ddx:
-            ddx = [
-                {
-                    "diagnosis": "Undifferentiated Febrile Illness",
-                    "confidence": "Medium",
-                    "rationale": "Clinical presentation requires further diagnostic workup.",
-                    "evidence": []
-                }
+            # Try to extract any diagnosis mentioned in the text
+            diagnosis_keywords = [
+                "meningitis", "pneumonia", "mi", "myocardial", "stroke", "sepsis",
+                "appendicitis", "cholecystitis", "uti", "gastroenteritis"
             ]
+            found_diagnosis = None
+            for keyword in diagnosis_keywords:
+                if keyword in lowered:
+                    found_diagnosis = keyword.title()
+                    break
+            
+            if found_diagnosis:
+                chunks = extract_chunk_ids(user_prompt, found_diagnosis.lower())
+                ddx.append({
+                    "diagnosis": found_diagnosis,
+                    "confidence": "Medium",
+                    "rationale": "Based on clinical presentation documented in the note.",
+                    "evidence": chunks[:2] if chunks else ["CLINICAL"]
+                })
+            else:
+                ddx.append({
+                    "diagnosis": "Undifferentiated Illness",
+                    "confidence": "Low",
+                    "rationale": "Clinical presentation requires further diagnostic workup to establish diagnosis.",
+                    "evidence": []
+                })
         
         return json.dumps(ddx[:3], indent=2)  # Return top 3
     
@@ -331,95 +416,190 @@ def call_local_stub(system_prompt: str, user_prompt: str, max_tokens: int = 512,
     # Step 1: Extract Structured Facts
     if "extract" in system_prompt.lower() or "extractor" in system_prompt.lower():
         out = []
+        import re
         
         # 1. Patient History & Demographics
         demographics = []
-        if "year" in lowered and "old" in lowered:
-            # Try to extract age
-            import re
-            age_match = re.search(r'(\d+)[- ]year[s]?[- ]old', lowered)
+        # Extract age
+        age_patterns = [
+            r'(\d+)[- ]year[s]?[- ]old',
+            r'age[:\s]+(\d+)',
+            r'(\d+)[- ]yo\b',
+            r'(\d+)\s*y/?o'
+        ]
+        for pattern in age_patterns:
+            age_match = re.search(pattern, lowered)
             if age_match:
                 demographics.append(f"- Age: {age_match.group(1)} years")
-        if "male" in lowered:
+                break
+                
+        # Extract gender
+        if re.search(r'\bmale\b', lowered) and not re.search(r'\bfemale\b', lowered):
             demographics.append("- Sex: Male")
-        elif "female" in lowered:
+        elif re.search(r'\bfemale\b', lowered):
             demographics.append("- Sex: Female")
+            
         if not demographics:
-            demographics = ["- Not specified"]
+            demographics = ["- Not specified in available context"]
         out.append("1. Patient History & Demographics:\n" + "\n".join(demographics))
         
-        # 2. Chief Complaint & Symptoms
+        # 2. Chief Complaint & Symptoms (more generic detection)
         symptoms = []
-        fever_chunks = extract_chunk_ids(user_prompt, "fever")
-        if fever_chunks:
-            symptoms.append(f"- Fever [evidence: {fever_chunks[0]}]")
         
-        headache_chunks = extract_chunk_ids(user_prompt, "headache")
-        if headache_chunks:
-            symptoms.append(f"- Severe headache [evidence: {headache_chunks[0]}]")
-            
-        neck_chunks = extract_chunk_ids(user_prompt, "neck") or extract_chunk_ids(user_prompt, "nuchal")
-        if neck_chunks:
-            symptoms.append(f"- Neck stiffness/nuchal rigidity [evidence: {neck_chunks[0]}]")
-            
-        if "photophobia" in lowered:
-            photo_chunks = extract_chunk_ids(user_prompt, "photophobia")
-            symptoms.append(f"- Photophobia [evidence: {photo_chunks[0] if photo_chunks else 'CLINICAL'}]")
-            
-        if "nausea" in lowered or "vomiting" in lowered:
-            gi_chunks = extract_chunk_ids(user_prompt, "nausea") or extract_chunk_ids(user_prompt, "vomiting")
-            symptoms.append(f"- Nausea/vomiting [evidence: {gi_chunks[0] if gi_chunks else 'CLINICAL'}]")
-            
+        # Common symptom keywords to look for
+        symptom_keywords = {
+            'pain': ['pain', 'ache', 'discomfort'],
+            'fever': ['fever', 'febrile', 'pyrexia', 'temperature'],
+            'headache': ['headache', 'cephalgia'],
+            'nausea': ['nausea', 'nauseous', 'vomiting', 'emesis'],
+            'shortness of breath': ['shortness of breath', 'dyspnea', 'sob', 'breathless'],
+            'cough': ['cough', 'coughing'],
+            'fatigue': ['fatigue', 'tired', 'weakness', 'malaise'],
+            'dizziness': ['dizziness', 'dizzy', 'vertigo', 'lightheaded'],
+            'chest pain': ['chest pain', 'chest discomfort'],
+            'abdominal pain': ['abdominal pain', 'stomach pain', 'belly pain'],
+            'neck stiffness': ['neck stiffness', 'nuchal rigidity', 'stiff neck'],
+            'rash': ['rash', 'skin lesion'],
+            'swelling': ['swelling', 'edema'],
+            'confusion': ['confusion', 'confused', 'altered mental', 'disoriented']
+        }
+        
+        for symptom_name, keywords in symptom_keywords.items():
+            for keyword in keywords:
+                if keyword in lowered:
+                    chunks = extract_chunk_ids(user_prompt, keyword)
+                    if chunks:
+                        symptoms.append(f"- {symptom_name.title()} [evidence: {chunks[0]}]")
+                    else:
+                        symptoms.append(f"- {symptom_name.title()} [evidence: CLINICAL]")
+                    break
+        
         if not symptoms:
-            symptoms = ["- No specific symptoms extracted"]
+            # Fallback: extract any "presents with" or "complains of" phrases
+            presents_match = re.search(r'(?:presents? with|complain[s]? of|report[s]?)\s+([^.]+)', lowered)
+            if presents_match:
+                symptoms.append(f"- {presents_match.group(1).strip().title()} [evidence: CLINICAL]")
+            else:
+                symptoms = ["- Chief complaint documented in clinical note"]
+        
         out.append("2. Chief Complaint & Symptoms:\n" + "\n".join(symptoms))
         
-        # 3. Physical Exam & Vitals
+        # 3. Physical Exam & Vitals (more comprehensive)
         exam = []
-        if "temp" in lowered or "°f" in lowered:
-            temp_chunks = extract_chunk_ids(user_prompt, "temp") or extract_chunk_ids(user_prompt, "°f")
-            exam.append(f"- Elevated temperature [evidence: {temp_chunks[0] if temp_chunks else 'VITALS'}]")
-            
-        if "nuchal rigidity" in lowered or "kernig" in lowered or "brudzinski" in lowered:
-            meningeal_chunks = extract_chunk_ids(user_prompt, "nuchal") or extract_chunk_ids(user_prompt, "kernig")
-            exam.append(f"- Positive meningeal signs [evidence: {meningeal_chunks[0] if meningeal_chunks else 'PHYSICAL'}]")
-            
-        if "hr" in lowered or "heart rate" in lowered or "bpm" in lowered:
-            vital_chunks = extract_chunk_ids(user_prompt, "hr") or extract_chunk_ids(user_prompt, "bpm")
-            exam.append(f"- Tachycardia noted [evidence: {vital_chunks[0] if vital_chunks else 'VITALS'}]")
-            
+        
+        # Vital signs patterns
+        vitals_patterns = {
+            'temperature': [r'temp[erature]*[:\s]+(\d+\.?\d*)', r'(\d{2,3}\.?\d*)\s*°?f', r'fever'],
+            'blood pressure': [r'bp[:\s]+(\d+/\d+)', r'blood pressure[:\s]+(\d+/\d+)'],
+            'heart rate': [r'hr[:\s]+(\d+)', r'heart rate[:\s]+(\d+)', r'(\d+)\s*bpm', r'pulse[:\s]+(\d+)'],
+            'respiratory rate': [r'rr[:\s]+(\d+)', r'respiratory rate[:\s]+(\d+)', r'(\d+)\s*breaths'],
+            'oxygen saturation': [r'o2[:\s]+(\d+)%?', r'spo2[:\s]+(\d+)%?', r'sat[:\s]+(\d+)%?']
+        }
+        
+        for vital_name, patterns in vitals_patterns.items():
+            for pattern in patterns:
+                if re.search(pattern, lowered):
+                    chunks = extract_chunk_ids(user_prompt, vital_name.split()[0])
+                    exam.append(f"- {vital_name.title()} noted [evidence: {chunks[0] if chunks else 'VITALS'}]")
+                    break
+        
+        # Physical exam findings keywords
+        exam_keywords = {
+            'abnormal breath sounds': ['crackles', 'rales', 'wheezing', 'rhonchi'],
+            'cardiac findings': ['murmur', 'gallop', 'rub'],
+            'meningeal signs': ['nuchal rigidity', 'kernig', 'brudzinski', 'meningeal'],
+            'neurological findings': ['focal deficit', 'weakness', 'numbness', 'paralysis'],
+            'skin findings': ['rash', 'lesion', 'erythema', 'cyanosis', 'jaundice'],
+            'abdominal findings': ['tenderness', 'guarding', 'rebound', 'distension']
+        }
+        
+        for exam_name, keywords in exam_keywords.items():
+            for keyword in keywords:
+                if keyword in lowered:
+                    chunks = extract_chunk_ids(user_prompt, keyword)
+                    exam.append(f"- {exam_name.title()} [evidence: {chunks[0] if chunks else 'PHYSICAL'}]")
+                    break
+        
         if not exam:
-            exam = ["- Physical examination findings in note"]
+            exam = ["- Physical examination findings documented"]
         out.append("3. Physical Exam & Vitals:\n" + "\n".join(exam))
         
-        # 4. Key Lab & Imaging Findings
+        # 4. Key Lab & Imaging Findings (more comprehensive)
         labs = []
-        if "wbc" in lowered or "white blood cell" in lowered:
-            wbc_chunks = extract_chunk_ids(user_prompt, "wbc") or extract_chunk_ids(user_prompt, "white blood")
-            labs.append(f"- Elevated WBC count [evidence: {wbc_chunks[0] if wbc_chunks else 'LABS'}]")
-            
-        if "neutrophil" in lowered:
-            neut_chunks = extract_chunk_ids(user_prompt, "neutrophil")
-            labs.append(f"- Neutrophilia [evidence: {neut_chunks[0] if neut_chunks else 'LABS'}]")
-            
-        if "crp" in lowered or "c-reactive" in lowered:
-            crp_chunks = extract_chunk_ids(user_prompt, "crp")
-            labs.append(f"- Elevated CRP [evidence: {crp_chunks[0] if crp_chunks else 'LABS'}]")
-            
+        
+        # Lab test keywords
+        lab_keywords = {
+            'WBC': ['wbc', 'white blood cell', 'leukocyte'],
+            'Hemoglobin': ['hemoglobin', 'hgb', 'hb'],
+            'Platelet count': ['platelet', 'plt'],
+            'Neutrophils': ['neutrophil', 'pmn'],
+            'Glucose': ['glucose', 'blood sugar'],
+            'Creatinine': ['creatinine', 'cr'],
+            'Troponin': ['troponin'],
+            'BUN': ['bun', 'blood urea nitrogen'],
+            'Electrolytes': ['sodium', 'potassium', 'na+', 'k+'],
+            'Liver enzymes': ['alt', 'ast', 'liver enzyme'],
+            'CRP': ['crp', 'c-reactive protein'],
+            'ESR': ['esr', 'sed rate']
+        }
+        
+        for lab_name, keywords in lab_keywords.items():
+            for keyword in keywords:
+                if keyword in lowered:
+                    chunks = extract_chunk_ids(user_prompt, keyword)
+                    # Check if elevated/decreased
+                    if any(term in lowered for term in ['elevated', 'high', 'increased', '↑']):
+                        labs.append(f"- Elevated {lab_name} [evidence: {chunks[0] if chunks else 'LABS'}]")
+                    elif any(term in lowered for term in ['low', 'decreased', 'reduced', '↓']):
+                        labs.append(f"- Decreased {lab_name} [evidence: {chunks[0] if chunks else 'LABS'}]")
+                    else:
+                        labs.append(f"- {lab_name} results available [evidence: {chunks[0] if chunks else 'LABS'}]")
+                    break
+        
+        # Imaging findings
+        imaging_keywords = ['x-ray', 'xray', 'ct', 'mri', 'ultrasound', 'echo', 'ecg', 'ekg']
+        for keyword in imaging_keywords:
+            if keyword in lowered:
+                chunks = extract_chunk_ids(user_prompt, keyword)
+                labs.append(f"- {keyword.upper()} findings documented [evidence: {chunks[0] if chunks else 'IMAGING'}]")
+                break
+        
         if not labs:
-            labs = ["- Laboratory values available in note"]
+            labs = ["- Laboratory/imaging results in clinical note"]
         out.append("4. Key Lab & Imaging Findings:\n" + "\n".join(labs))
         
-        # 5. Clinician's Stated Assessment
+        # 5. Clinician's Stated Assessment (extract any assessment/diagnosis mentioned)
         assessment = []
-        if "meningitis" in lowered:
-            assess_chunks = extract_chunk_ids(user_prompt, "meningitis")
-            assessment.append(f"- Concerning for bacterial meningitis [evidence: {assess_chunks[0] if assess_chunks else 'ASSESSMENT'}]")
-        elif "assessment" in lowered:
-            assess_chunks = extract_chunk_ids(user_prompt, "assessment")
-            assessment.append(f"- Clinical assessment documented [evidence: {assess_chunks[0] if assess_chunks else 'ASSESSMENT'}]")
-        else:
-            assessment = ["- Assessment requires clinical correlation"]
+        
+        # Common assessment/diagnosis keywords
+        assessment_keywords = [
+            'meningitis', 'pneumonia', 'copd', 'asthma', 'mi', 'myocardial infarction',
+            'stroke', 'sepsis', 'appendicitis', 'cholecystitis', 'pancreatitis',
+            'uti', 'urinary tract infection', 'gastroenteritis', 'dehydration',
+            'hypertension', 'diabetes', 'concerning for', 'likely', 'suggests',
+            'differential', 'impression', 'diagnosis'
+        ]
+        
+        for keyword in assessment_keywords:
+            if keyword in lowered:
+                chunks = extract_chunk_ids(user_prompt, keyword)
+                # Extract the sentence containing the assessment
+                sentences = user_prompt.split('.')
+                for sentence in sentences:
+                    if keyword in sentence.lower():
+                        assessment.append(f"- {sentence.strip()[:100]}... [evidence: {chunks[0] if chunks else 'ASSESSMENT'}]")
+                        break
+                if assessment:
+                    break
+        
+        if not assessment:
+            # Fallback: look for assessment section
+            if "assessment" in lowered or "plan" in lowered:
+                chunks = extract_chunk_ids(user_prompt, "assessment") or extract_chunk_ids(user_prompt, "plan")
+                assessment.append(f"- Clinical assessment documented [evidence: {chunks[0] if chunks else 'ASSESSMENT'}]")
+            else:
+                assessment = ["- Assessment requires clinical correlation"]
+        
         out.append("5. Clinician's Stated Assessment:\n" + "\n".join(assessment))
         
         return "\n\n".join(out)
