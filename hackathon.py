@@ -17,6 +17,13 @@ ensure originality and to meet hackathon rules.
 """
 
 import os
+
+# Disable TensorFlow and torchvision to avoid DLL errors on Windows
+os.environ['USE_TF'] = '0'
+os.environ['USE_TORCH'] = '1'
+os.environ['TRANSFORMERS_NO_ADVISORY_WARNINGS'] = '1'
+os.environ['TOKENIZERS_PARALLELISM'] = 'false'
+
 import re
 import json
 import uuid

@@ -7,3 +7,5 @@ openai
 python-dotenv
 tqdm
 requests
+torch
+transformers[torch]

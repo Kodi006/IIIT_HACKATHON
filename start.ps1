@@ -17,25 +17,27 @@ try {
 }
 
 # Check if virtual environment exists
-if (-not (Test-Path "venv")) {
+if (-not (Test-Path ".venv")) {
     Write-Host ""
     Write-Host "Creating virtual environment..." -ForegroundColor Yellow
-    python -m venv venv
+    python -m venv .venv
     Write-Host "✓ Virtual environment created" -ForegroundColor Green
 }
 
 # Activate virtual environment
 Write-Host ""
 Write-Host "Activating virtual environment..." -ForegroundColor Yellow
-& .\venv\Scripts\Activate.ps1
+& .\.venv\Scripts\Activate.ps1
+
+$VenvPython = ".\.venv\Scripts\python.exe"
 
 # Check if requirements are installed
 Write-Host ""
 Write-Host "Checking dependencies..." -ForegroundColor Yellow
-$streamlitCheck = pip list | Select-String "streamlit"
+$streamlitCheck = & $VenvPython -m pip list | Select-String "streamlit"
 if (-not $streamlitCheck) {
     Write-Host "Installing dependencies (this may take a few minutes)..." -ForegroundColor Yellow
-    pip install -r requirements.txt
+    & $VenvPython -m pip install -r requirements.txt
     Write-Host "✓ Dependencies installed" -ForegroundColor Green
 } else {
     Write-Host "✓ Dependencies already installed" -ForegroundColor Green
@@ -62,4 +64,4 @@ Write-Host "Press Ctrl+C in this terminal to stop the app" -ForegroundColor Cyan
 Write-Host ""
 
 # Launch Streamlit
-streamlit run hackathon.py
+& $VenvPython -m streamlit run hackathon.py
