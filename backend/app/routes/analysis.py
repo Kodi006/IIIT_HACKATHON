@@ -20,7 +20,7 @@ async def analyze_note(request: AnalysisRequest):
         
         result = await analyze_clinical_note(
             full_text=request.text,
-            llm_mode=request.llm_mode.value,
+            llm_mode=request.llm_mode,
             top_k=request.top_k,
             use_small_embedder=request.use_small_embedder
         )

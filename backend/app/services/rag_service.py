@@ -211,9 +211,43 @@ def call_local_stub(system_prompt: str, user_prompt: str, max_tokens: int = 512,
                     pass
         return chunks[:2]
     
+    
+    # Step 3: Interactive Chat (Moved to top)
+    if "user question" in lowered or "chat history" in lowered:
+        question_match = re.search(r'USER QUESTION: (.*)', user_prompt, re.IGNORECASE)
+        question = question_match.group(1) if question_match else "your question"
+        
+        # Simple keyword matching for demo
+        response_parts = []
+        response_parts.append(f"Based on the analysis regarding \"{question}\":\n")
+        
+        # Check context for relevant info
+        context_match = re.search(r'CONTEXT:\n(.*?)CHAT HISTORY', user_prompt, re.DOTALL)
+        if not context_match:
+             context_match = re.search(r'CONTEXT:\n(.*?)USER QUESTION', user_prompt, re.DOTALL)
+             
+        context = context_match.group(1) if context_match else ""
+        
+        found_info = False
+        lines = context.split('\n')
+        for line in lines:
+            # Simple keyword overlap
+            q_words = [w for w in question.lower().split() if len(w) > 3]
+            if any(w in line.lower() for w in q_words) and len(line) > 20:
+                response_parts.append(f"- {line.strip()}")
+                found_info = True
+                if len(response_parts) > 5: break
+        
+        if not found_info:
+            response_parts.append("I couldn't find specific evidence for that in the clinical note, but based on the general assessment, the patient warrants close monitoring.")
+            
+        response_parts.append("\n(Note: This is a local demo stub. For full reasoning, switch to Ollama or OpenAI mode.)")
+        return "\n".join(response_parts)
+
     # Step 2: Differential Diagnosis
-    if ("differential diagnoses" in lowered or "json array" in lowered or 
-        "step1_output" in lowered or "reasoning engine" in system_prompt.lower()):
+    if (("differential diagnoses" in lowered or "json array" in lowered or 
+        "step1_output" in lowered or "reasoning engine" in system_prompt.lower()) and 
+        "user question" not in lowered):
         
         has_fever = any(word in lowered for word in ["fever", "febrile", "temperature"])
         has_chest_pain = any(word in lowered for word in ["chest pain", "chest discomfort"])
@@ -457,14 +491,146 @@ def call_local_stub(system_prompt: str, user_prompt: str, max_tokens: int = 512,
         
         return "\n\n".join(out)
     
+    # If no specific pattern matched, return default
     return "LOCAL_STUB_RESPONSE"
 
+
+def call_ollama(system_prompt: str, user_prompt: str, max_tokens: int = 512, temperature: float = 0.7) -> str:
+    """
+    Call Ollama (local LLM) API
+    Requires Ollama to be running locally (ollama serve)
+    Install: https://ollama.com/download
+    Run: ollama pull mistral (or llama2, phi, etc.)
+    """
+    import requests
+    
+    try:
+        url = "http://localhost:11434/api/generate"
+        
+        # Combine system and user prompts for Ollama
+        full_prompt = f"{system_prompt}\n\n{user_prompt}"
+        
+        payload = {
+            "model": "llama3.2:3b",  # Can be changed to llama2, phi, etc.
+            "prompt": full_prompt,
+            "stream": False,
+            "options": {
+                "temperature": temperature,
+                "num_predict": max_tokens
+            }
+        }
+        
+        response = requests.post(url, json=payload, timeout=300)
+        response.raise_for_status()
+        
+        result = response.json()
+        return result.get("response", "No response from Ollama")
+        
+    except requests.exceptions.ConnectionError:
+        return "ERROR: Ollama is not running. Please start Ollama with 'ollama serve' and ensure you have a model installed (e.g., 'ollama pull llama3.2:3b')"
+    except requests.exceptions.Timeout:
+        return "ERROR: Ollama request timed out. The first request can take significantly longer (up to 5 mins) as the model loads into RAM. Please try again - subsequent requests will be faster!"
+    except requests.exceptions.HTTPError as e:
+        return f"ERROR: Ollama HTTP error: {str(e)}. Make sure Llama 3.2 model is installed with 'ollama pull llama3.2:3b'"
+    except Exception as e:
+        return f"ERROR calling Ollama: {str(e)}"
+
+
+def call_groq(system_prompt: str, user_prompt: str, max_tokens: int = 512, temperature: float = 0.7) -> str:
+    """
+    Call Groq API (fast, free inference)
+    Get free API key at: https://console.groq.com
+    Set GROQ_API_KEY in .env file
+    """
+    import os
+    
+    try:
+        from groq import Groq
+        
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            return "ERROR: GROQ_API_KEY not found in environment. Get free key at https://console.groq.com"
+        
+        client = Groq(api_key=api_key)
+        
+        response = client.chat.completions.create(
+            model="llama3-8b-8192",  # Fast, free model
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
+        
+        return response.choices[0].message.content
+        
+    except ImportError:
+        return "ERROR: groq package not installed. Run: pip install groq"
+    except Exception as e:
+        return f"ERROR calling Groq: {str(e)}"
+
+
+def call_gemini(system_prompt: str, user_prompt: str, max_tokens: int = 512, temperature: float = 0.7) -> str:
+    """
+    Call Google Gemini API (free tier available)
+    Get free API key at: https://makersuite.google.com/app/apikey
+    Set GEMINI_API_KEY in .env file
+    """
+    import os
+    
+    try:
+        import google.generativeai as genai
+        
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return "ERROR: GEMINI_API_KEY not found in environment. Get free key at https://makersuite.google.com/app/apikey"
+        
+        genai.configure(api_key=api_key)
+        
+        model = genai.GenerativeModel('gemini-pro')
+        
+        # Combine system and user prompts
+        full_prompt = f"{system_prompt}\n\n{user_prompt}"
+        
+        response = model.generate_content(
+            full_prompt,
+            generation_config={
+                "temperature": temperature,
+                "max_output_tokens": max_tokens
+            }
+        )
+        
+        return response.text
+        
+    except ImportError:
+        return "ERROR: google-generativeai package not installed. Run: pip install google-generativeai"
+    except Exception as e:
+        return f"ERROR calling Gemini: {str(e)}"
+
+
 def call_llm(system_prompt: str, user_prompt: str, max_tokens: int = 512, temperature: float = 0.0, llm_mode: str = "local_stub") -> str:
-    """Call appropriate LLM based on mode"""
+    """
+    Call appropriate LLM based on mode
+    
+    Supported modes:
+    - local_stub: Fast demo mode (no API/setup needed)
+    - ollama: Local LLM via Ollama (FREE, private, no API key)
+    - groq: Fast API (FREE with generous limits)
+    - gemini: Google AI (FREE tier available)
+    - openai: OpenAI API (requires paid API key)
+    """
     if llm_mode == "openai":
         return call_openai_chat(system_prompt, user_prompt, max_tokens, temperature)
+    elif llm_mode == "ollama":
+        return call_ollama(system_prompt, user_prompt, max_tokens, temperature)
+    elif llm_mode == "groq":
+        return call_groq(system_prompt, user_prompt, max_tokens, temperature)
+    elif llm_mode == "gemini":
+        return call_gemini(system_prompt, user_prompt, max_tokens, temperature)
     else:
         return call_local_stub(system_prompt, user_prompt, max_tokens, temperature)
+
 
 async def analyze_clinical_note(
     full_text: str,
@@ -497,11 +663,35 @@ async def analyze_clinical_note(
     
     step1_output = call_llm(step1_system, step1_user, llm_mode=llm_mode)
     
-    # Step 2: Differential diagnosis
-    step2_system = "You are a clinical reasoning engine. Use ONLY the structured facts provided from Step 1 to produce a prioritized differential diagnosis."
-    step2_user = f"STEP1_OUTPUT:\n{step1_output}\n\nTask: Provide the top 3 differential diagnoses as a JSON array. For each diagnosis include:\n - diagnosis: string\n - confidence: High|Medium|Low\n - rationale: 1-2 sentence explanation\n - evidence: list of chunk_id strings\nReturn valid JSON only."
+    # Step 2: Differential diagnosis (Enhanced prompt for detailed analysis)
+    step2_system = """You are an expert clinical reasoning engine and diagnostic specialist. 
+Your task is to analyze the structured clinical facts and produce a comprehensive, evidence-based differential diagnosis.
+Be thorough in your clinical reasoning and provide actionable insights."""
     
-    step2_output = call_llm(step2_system, step2_user, llm_mode=llm_mode)
+    step2_user = f"""STEP1_OUTPUT (Extracted Clinical Facts):
+{step1_output}
+
+TASK: Generate a detailed differential diagnosis analysis.
+
+Provide the top 3-5 differential diagnoses as a JSON array. For EACH diagnosis, include:
+- "diagnosis": The specific diagnosis name
+- "confidence": "High", "Medium", or "Low" based on how well it fits the clinical picture
+- "rationale": A detailed 2-4 sentence explanation covering:
+  * Key clinical findings that support this diagnosis
+  * Pathophysiological reasoning
+  * Why this is ranked at this confidence level
+- "evidence": List of chunk_id strings that support this diagnosis
+- "workup": Recommended diagnostic tests/studies to confirm or rule out this diagnosis
+- "red_flags": Any concerning findings that require urgent attention
+
+Consider:
+1. Most likely diagnosis based on the clinical presentation
+2. Life-threatening conditions that must not be missed ("cannot-miss" diagnoses)
+3. Common conditions that present similarly
+
+Return ONLY valid JSON array, no other text."""
+    
+    step2_output = call_llm(step2_system, step2_user, max_tokens=1024, llm_mode=llm_mode)
     
     # SOAP note
     soap_system = "You are a professional medical summarization agent. Produce a concise, factual SOAP note using only the context given."

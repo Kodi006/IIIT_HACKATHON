@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from app.routes import analysis, ocr, health
+from app.routes import analysis, ocr, health, chat
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -35,6 +35,7 @@ app.add_middleware(
 app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(ocr.router, prefix="/api/ocr", tags=["OCR"])
 app.include_router(analysis.router, prefix="/api/analysis", tags=["Analysis"])
+app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 
 # Root endpoint
 @app.get("/")
@@ -64,5 +65,6 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8000,
         reload=True,
-        log_level="info"
+        log_level="info",
+        timeout_keep_alive=300
     )

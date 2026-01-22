@@ -12,7 +12,7 @@ const api = axios.create({
 
 export interface AnalysisRequest {
   text: string;
-  llm_mode?: 'openai' | 'local_stub';
+  llm_mode?: string;
   top_k?: number;
   use_small_embedder?: boolean;
 }
@@ -22,6 +22,8 @@ export interface DiagnosisItem {
   confidence: 'High' | 'Medium' | 'Low';
   rationale: string;
   evidence: string[];
+  workup?: string;
+  red_flags?: string;
 }
 
 export interface ChunkInfo {
