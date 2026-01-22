@@ -110,8 +110,8 @@ export default function ChatInterface({ analysisData, visible, llmMode }: ChatIn
                 </div>
             </div>
 
-            {/* Messages Container */}
-            <div className="h-96 overflow-y-auto p-4 space-y-4 bg-slate-900/30">
+            {/* Messages Container - Tall for expanded view */}
+            <div className="h-[400px] lg:h-[75vh] overflow-y-auto p-4 space-y-4 bg-slate-900/30">
                 {messages.length === 0 && (
                     <div className="flex items-center justify-center h-full">
                         <p className="text-slate-500 italic text-center">
@@ -173,9 +173,13 @@ export default function ChatInterface({ analysisData, visible, llmMode }: ChatIn
                         className="flex justify-start"
                     >
                         <div className="bg-purple-500/10 border border-purple-400/20 rounded-xl p-4">
-                            <div className="flex items-center gap-2">
-                                <Loader2 className="w-4 h-4 animate-spin text-purple-300" />
-                                <span className="text-sm text-slate-400">Thinking...</span>
+                            <div className="flex items-center gap-3">
+                                <span className="text-sm text-slate-400">AI is typing</span>
+                                <div className="flex gap-1">
+                                    <div className="w-2 h-2 rounded-full bg-purple-400 typing-dot" />
+                                    <div className="w-2 h-2 rounded-full bg-purple-400 typing-dot" />
+                                    <div className="w-2 h-2 rounded-full bg-purple-400 typing-dot" />
+                                </div>
                             </div>
                         </div>
                     </motion.div>

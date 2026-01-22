@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import Footer from './components/Footer'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -17,8 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={inter.className}>
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950">
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 pb-24">
           {children}
+          <Footer />
         </div>
       </body>
     </html>

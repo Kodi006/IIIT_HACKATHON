@@ -5,13 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload, FileText, Brain, Activity, Loader2,
   AlertCircle, CheckCircle, Sparkles, TrendingUp,
-  FileSearch, Stethoscope, ChevronRight, MessageCircle
+  FileSearch, Stethoscope, ChevronRight, MessageCircle, Copy, Check
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { clinicalAPI, type AnalysisResponse, type DiagnosisItem } from '@/lib/api';
 import { cn, formatConfidence } from '@/lib/utils';
 import ChatInterface from './components/ChatInterface';
 import NavBar from './components/NavBar';
+import NeuralBackground from './components/NeuralBackground';
 
 // Sample clinical note
 const SAMPLE_NOTE = `CHIEF COMPLAINT: Fever, headache, and neck stiffness for 3 days.
@@ -55,6 +56,13 @@ export default function Home() {
   const [selectedDiagnosis, setSelectedDiagnosis] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -129,13 +137,25 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-purple-500/30">
+    <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-purple-500/30 overflow-hidden relative">
+      {/* 1. Gradient Orbs Layer (Bottom) */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div className="gradient-orb gradient-orb-1" />
+        <div className="gradient-orb gradient-orb-2" />
+        <div className="gradient-orb gradient-orb-3" />
+      </div>
+
+      {/* 2. Neural Network Layer (Middle) */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <NeuralBackground />
+      </div>
+
       <NavBar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {/* Spacer for fixed navbar */}
       <div className="h-24" />
 
-      <main className="max-w-7xl mx-auto p-4 md:p-8">
+      <main className="max-w-7xl mx-auto p-4 md:p-8 relative z-10">
         <AnimatePresence mode="wait">
 
           {/* HOME TAB */}
@@ -179,6 +199,28 @@ export default function Home() {
                 >
                   Download Ollama
                 </button>
+              </div>
+
+              {/* Feature Cards */}
+              <div className="grid md:grid-cols-4 gap-4 mt-16 w-full max-w-4xl">
+                {[
+                  { icon: Brain, title: 'RAG-Powered', desc: 'Retrieval-augmented generation', color: 'blue' },
+                  { icon: MessageCircle, title: 'AI Chat', desc: 'Interactive Q&A', color: 'purple' },
+                  { icon: FileSearch, title: 'SOAP Notes', desc: 'Auto-generated summaries', color: 'green' },
+                  { icon: Activity, title: 'Evidence', desc: 'Full traceability', color: 'pink' },
+                ].map((feature, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * idx }}
+                    className={`feature-card glass rounded-xl p-5 border border-${feature.color}-500/20 text-left`}
+                  >
+                    <feature.icon className={`w-8 h-8 text-${feature.color}-400 mb-3`} />
+                    <h3 className="font-bold text-white mb-1">{feature.title}</h3>
+                    <p className="text-sm text-slate-400">{feature.desc}</p>
+                  </motion.div>
+                ))}
               </div>
             </motion.div>
           )}
@@ -331,15 +373,38 @@ export default function Home() {
               )}
 
               {isAnalyzing && (
-                <div className="flex flex-col items-center justify-center p-20 glass rounded-3xl border border-blue-500/20">
+                <div className="flex flex-col items-center justify-center p-12 glass rounded-3xl border border-blue-500/20">
                   <div className="relative mb-8">
                     <div className="absolute inset-0 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin w-20 h-20"></div>
                     <div className="w-20 h-20 flex items-center justify-center">
                       <Brain className="w-8 h-8 text-blue-400" />
                     </div>
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">Analyzing Clinical Data</h3>
-                  <p className="text-slate-400">Running RAG pipeline & generating diagnosis...</p>
+                  <h3 className="text-2xl font-bold text-white mb-6">Analyzing Clinical Data</h3>
+
+                  {/* Progress Steps */}
+                  <div className="w-full max-w-md space-y-3">
+                    {[
+                      { step: 1, label: 'Extracting clinical facts', delay: 0 },
+                      { step: 2, label: 'Building evidence index', delay: 2 },
+                      { step: 3, label: 'Generating differential diagnoses', delay: 5 },
+                      { step: 4, label: 'Preparing SOAP summary', delay: 8 },
+                    ].map((item) => (
+                      <motion.div
+                        key={item.step}
+                        initial={{ opacity: 0.3 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: item.delay, duration: 0.5 }}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-slate-900/50 shimmer"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
+                          <span className="text-xs font-bold text-blue-400">{item.step}</span>
+                        </div>
+                        <span className="text-sm text-slate-300">{item.label}</span>
+                        <Loader2 className="w-4 h-4 animate-spin text-blue-400 ml-auto" />
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -370,22 +435,49 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="grid lg:grid-cols-3 gap-8">
-                    {/* Left Column: SOAP & Diagnosis */}
-                    <div className="lg:col-span-2 space-y-6">
+                  <div className={cn(
+                    "grid gap-8 transition-all duration-500",
+                    showChat ? "lg:grid-cols-2" : "lg:grid-cols-3"
+                  )}>
+                    {/* Left Column: SOAP & Diagnosis (if chat closed) */}
+                    <motion.div
+                      layout
+                      className={cn(
+                        "space-y-6 transition-all duration-500",
+                        showChat ? "lg:col-span-1" : "lg:col-span-2"
+                      )}
+                    >
 
-                      {/* SOAP Summary */}
+                      {/* SOAP Summary - Always here */}
                       <div className="glass rounded-2xl p-6 border border-green-500/20">
-                        <div className="flex items-center gap-3 mb-4">
-                          <FileSearch className="w-5 h-5 text-green-400" />
-                          <h3 className="text-lg font-semibold text-white">SOAP Summary</h3>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <FileSearch className="w-5 h-5 text-green-400" />
+                            <h3 className="text-lg font-semibold text-white">SOAP Summary</h3>
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard(result.soap)}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-medium transition-all"
+                          >
+                            {copied ? (
+                              <>
+                                <Check className="w-3 h-3 text-green-400" />
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                Copy
+                              </>
+                            )}
+                          </button>
                         </div>
                         <pre className="bg-slate-950/50 rounded-xl p-5 text-sm text-slate-300 whitespace-pre-wrap font-mono leading-relaxed border border-slate-800">
                           {result.soap}
                         </pre>
                       </div>
 
-                      {/* DDx List */}
+                      {/* DDx List - Always Visible */}
                       <div className="glass rounded-2xl p-6 border border-pink-500/20">
                         <div className="flex items-center gap-3 mb-6">
                           <Activity className="w-5 h-5 text-pink-400" />
@@ -413,7 +505,28 @@ export default function Home() {
                                 <div className="flex items-start justify-between mb-3">
                                   <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-2">
-                                      <div className={cn("w-2 h-2 rounded-full", dx.confidence === 'High' ? 'bg-green-400' : 'bg-yellow-400')}></div>
+                                      {/* Confidence Meter */}
+                                      <div className="relative w-10 h-10 flex-shrink-0">
+                                        <svg className="confidence-ring w-10 h-10" viewBox="0 0 36 36">
+                                          <circle
+                                            cx="18" cy="18" r="15"
+                                            fill="none"
+                                            stroke="rgba(148, 163, 184, 0.2)"
+                                            strokeWidth="3"
+                                          />
+                                          <circle
+                                            cx="18" cy="18" r="15"
+                                            fill="none"
+                                            stroke={dx.confidence === 'High' ? '#22c55e' : dx.confidence === 'Medium' ? '#eab308' : '#ef4444'}
+                                            strokeWidth="3"
+                                            strokeDasharray={`${conf.percentage * 0.94} 94`}
+                                            strokeLinecap="round"
+                                          />
+                                        </svg>
+                                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
+                                          {conf.percentage}%
+                                        </span>
+                                      </div>
                                       <h3 className="text-lg font-semibold text-white group-hover:text-pink-200 transition-colors">{dx.diagnosis}</h3>
                                     </div>
                                   </div>
@@ -467,16 +580,30 @@ export default function Home() {
                         </div>
                       </div>
 
-                    </div>
+                    </motion.div>
 
-                    {/* Right Column: Chat */}
-                    <div className="lg:col-span-1">
-                      <div className="sticky top-28 space-y-6">
-                        {/* Chat Interface - Always visible here if showChat is true or just embedded */}
+                    {/* Right Column: Chat + Diagnosis (if chat open) */}
+                    <motion.div
+                      layout
+                      className={cn(
+                        "transition-all duration-500 ease-in-out",
+                        showChat ? "lg:col-span-1" : "lg:col-span-1"
+                      )}
+                    >
+                      <div className="space-y-6">
+
+                        {/* Chat Interface - Stacks below diagnosis if open */}
                         {showChat ? (
-                          <ChatInterface analysisData={result} visible={true} llmMode={llmMode} />
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <ChatInterface analysisData={result} visible={true} llmMode={llmMode} />
+                          </motion.div>
                         ) : (
-                          <div className="glass rounded-2xl p-6 border border-purple-500/20 text-center">
+                          <div className="glass rounded-2xl p-6 border border-purple-500/20 text-center sticky top-28">
                             <MessageCircle className="w-12 h-12 text-purple-400 mx-auto mb-4 opacity-50" />
                             <h3 className="text-lg font-medium text-white mb-2">AI Assistant Ready</h3>
                             <p className="text-sm text-slate-400 mb-6">Ask follow-up questions about the patient's note and the diagnosis.</p>
@@ -491,14 +618,14 @@ export default function Home() {
 
                         {/* Helper Tip */}
                         {!showChat && (
-                          <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                          <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 sticky top-[300px]">
                             <p className="text-xs text-blue-300 leading-relaxed">
                               <span className="font-bold">Tip:</span> Click on any diagnosis card to see the specific evidence chunks used by the AI to reach that conclusion.
                             </p>
                           </div>
                         )}
                       </div>
-                    </div>
+                    </motion.div>
                   </div>
                 </div>
               )}
@@ -507,6 +634,8 @@ export default function Home() {
 
         </AnimatePresence>
       </main>
+
+
     </div>
   );
 }

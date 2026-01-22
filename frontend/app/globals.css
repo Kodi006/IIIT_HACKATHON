@@ -53,6 +53,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -92,4 +93,138 @@
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-primary;
+}
+
+/* Animated gradient orbs - Bio-Digital Theme */
+.gradient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  /* Increased blur for softer look */
+  opacity: 0.4;
+  /* Slightly more subtle */
+  animation: float 25s ease-in-out infinite;
+  /* Slower animation */
+}
+
+.gradient-orb-1 {
+  width: 700px;
+  height: 700px;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.25) 0%, rgba(59, 130, 246, 0.15) 100%);
+  /* Blue/Tech */
+  top: -250px;
+  left: -200px;
+  animation-delay: 0s;
+}
+
+.gradient-orb-2 {
+  width: 500px;
+  height: 500px;
+  background: linear-gradient(180deg, rgba(168, 85, 247, 0.25) 0%, rgba(236, 72, 153, 0.15) 100%);
+  /* Purple/Pink */
+  bottom: -150px;
+  right: -100px;
+  animation-delay: -8s;
+}
+
+.gradient-orb-3 {
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(180deg, rgba(45, 212, 191, 0.2) 0%, rgba(99, 102, 241, 0.15) 100%);
+  /* Teal/Indigo */
+  top: 40%;
+  right: 15%;
+  animation-delay: -15s;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(30px, -30px) scale(1.05);
+  }
+
+  50% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+
+  75% {
+    transform: translate(20px, 10px) scale(1.02);
+  }
+}
+
+/* Typing indicator */
+.typing-dot {
+  animation: typingBounce 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+
+  30% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
+}
+
+/* Confidence meter */
+.confidence-ring {
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+
+.confidence-ring circle {
+  transition: stroke-dashoffset 1s ease-out;
+}
+
+/* Shimmer loading effect */
+.shimmer {
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Feature card hover */
+.feature-card {
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.3);
 }
