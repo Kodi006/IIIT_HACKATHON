@@ -9,7 +9,7 @@ export default function Footer() {
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, type: "spring", stiffness: 100, damping: 20 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-xl supports-[backdrop-filter]:bg-slate-950/60"
+            className="relative z-50 bg-slate-950/80 backdrop-blur-xl supports-[backdrop-filter]:bg-slate-950/60 border-t border-slate-800/50"
         >
             <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
 

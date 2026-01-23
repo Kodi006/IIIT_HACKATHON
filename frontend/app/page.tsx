@@ -634,8 +634,6 @@ export default function Home() {
 
         </AnimatePresence>
       </main>
-
-
     </div>
   );
 }
