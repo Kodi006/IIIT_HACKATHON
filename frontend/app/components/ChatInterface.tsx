@@ -101,17 +101,17 @@ export default function ChatInterface({ analysisData, visible, llmMode }: ChatIn
             <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-b border-purple-500/20 p-4">
                 <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-purple-500/20">
-                        <MessageCircle className="w-5 h-5 text-purple-300" />
+                        <MessageCircle className="w-5 h-5 text-purple-600 dark:text-purple-300" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-white">Chat with Analysis</h3>
-                        <p className="text-sm text-slate-400">Ask questions about this clinical note</p>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Chat with Analysis</h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Ask questions about this clinical note</p>
                     </div>
                 </div>
             </div>
 
             {/* Messages Container - Tall for expanded view */}
-            <div className="h-[400px] lg:h-[75vh] overflow-y-auto p-4 space-y-4 bg-slate-900/30">
+            <div className="h-[400px] lg:h-[75vh] overflow-y-auto p-4 space-y-4 bg-white/50 dark:bg-slate-900/30">
                 {messages.length === 0 && (
                     <div className="flex items-center justify-center h-full">
                         <p className="text-slate-500 italic text-center">
@@ -130,30 +130,30 @@ export default function ChatInterface({ analysisData, visible, llmMode }: ChatIn
                             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
                             <div className={`max-w-[80%] rounded-xl p-4 ${msg.role === 'user'
-                                ? 'bg-blue-500/20 border border-blue-400/30'
-                                : 'bg-purple-500/10 border border-purple-400/20'
+                                ? 'bg-blue-50 border border-blue-200 text-slate-800 dark:bg-blue-500/20 dark:border-blue-400/30 dark:text-slate-200'
+                                : 'bg-purple-50 border border-purple-200 text-slate-800 dark:bg-purple-500/10 dark:border-purple-400/20 dark:text-slate-200'
                                 }`}>
                                 <div className="flex items-start gap-2 mb-1">
-                                    <span className="text-xs font-bold text-slate-400 uppercase">
+                                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
                                         {msg.role === 'user' ? 'You' : 'AI Assistant'}
                                     </span>
                                 </div>
-                                <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">
+                                <p className="text-sm leading-relaxed whitespace-pre-wrap">
                                     {msg.content}
                                 </p>
 
                                 {/* Display sources if available */}
                                 {msg.sources && msg.sources.length > 0 && (
-                                    <div className="mt-3 pt-3 border-t border-slate-700">
+                                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <FileText className="w-3 h-3 text-amber-400" />
-                                            <span className="text-xs text-amber-300 font-semibold">Evidence Used:</span>
+                                            <FileText className="w-3 h-3 text-amber-500 dark:text-amber-400" />
+                                            <span className="text-xs text-amber-600 dark:text-amber-300 font-semibold">Evidence Used:</span>
                                         </div>
                                         <div className="flex flex-wrap gap-1.5">
                                             {msg.sources.slice(0, 3).map((source, i) => (
                                                 <span
                                                     key={i}
-                                                    className="px-2 py-0.5 bg-slate-800/50 border border-slate-700 rounded text-xs text-slate-400"
+                                                    className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-600 dark:text-slate-400"
                                                 >
                                                     {source}
                                                 </span>
@@ -172,9 +172,9 @@ export default function ChatInterface({ analysisData, visible, llmMode }: ChatIn
                         animate={{ opacity: 1 }}
                         className="flex justify-start"
                     >
-                        <div className="bg-purple-500/10 border border-purple-400/20 rounded-xl p-4">
+                        <div className="bg-purple-50 border border-purple-200 dark:bg-purple-500/10 dark:border-purple-400/20 rounded-xl p-4">
                             <div className="flex items-center gap-3">
-                                <span className="text-sm text-slate-400">AI is typing</span>
+                                <span className="text-sm text-slate-500 dark:text-slate-400">AI is typing</span>
                                 <div className="flex gap-1">
                                     <div className="w-2 h-2 rounded-full bg-purple-400 typing-dot" />
                                     <div className="w-2 h-2 rounded-full bg-purple-400 typing-dot" />
@@ -189,7 +189,7 @@ export default function ChatInterface({ analysisData, visible, llmMode }: ChatIn
             </div>
 
             {/* Input Area */}
-            <div className="border-t border-purple-500/20 p-4 bg-slate-900/50">
+            <div className="border-t border-purple-500/20 p-4 bg-white/80 dark:bg-slate-900/50">
                 <div className="flex gap-2">
                     <input
                         type="text"
@@ -198,12 +198,12 @@ export default function ChatInterface({ analysisData, visible, llmMode }: ChatIn
                         onKeyPress={handleKeyPress}
                         placeholder="Ask a question about the analysis..."
                         disabled={loading}
-                        className="flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-400/50 focus:bg-slate-800 transition-all disabled:opacity-50"
+                        className="flex-1 bg-white border border-slate-200 dark:bg-slate-800/50 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-purple-500/50 dark:focus:border-purple-400/50 focus:bg-slate-50 dark:focus:bg-slate-800 transition-all disabled:opacity-50"
                     />
                     <button
                         onClick={sendMessage}
                         disabled={loading || !input.trim()}
-                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold text-white hover:from-purple-500 hover:to-pink-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold text-white hover:from-purple-500 hover:to-pink-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-purple-500/20"
                     >
                         <Send className="w-4 h-4" />
                     </button>

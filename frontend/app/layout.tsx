@@ -2,11 +2,12 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Footer from './components/Footer'
+import { ThemeProvider } from './components/ThemeProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Clinical Co-Pilot - AI-Powered Clinical Decision Support',
+  title: 'Medox - AI-Powered Clinical Decision Support',
   description: 'Modern clinical decision support system with RAG-powered analysis',
 }
 
@@ -16,12 +17,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className} style={{ background: 'transparent' }}>
-        <div className="min-h-screen">
-          {children}
-          <Footer />
-        </div>
+        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+          <div className="min-h-screen bg-white dark:bg-transparent transition-colors duration-300">
+            {children}
+            <Footer />
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   )

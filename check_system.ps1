@@ -1,6 +1,6 @@
-# System Check Script for Clinical Co-Pilot
+# System Check Script for Medox
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Clinical Co-Pilot - System Check" -ForegroundColor Cyan
+Write-Host "Medox - System Check" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 

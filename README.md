@@ -1,4 +1,4 @@
-# Clinical Co-Pilot: Comprehensive Project Documentation
+# Medox: Comprehensive Project Documentation
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@
 
 ## System Overview
 
-The **Clinical Co-Pilot** is an AI-powered clinical decision support system that helps healthcare professionals analyze clinical notes and generate differential diagnoses using **Retrieval-Augmented Generation (RAG)** technology. It combines natural language processing, vector search, and large language models to provide evidence-based clinical insights.
+The **Medox** is an AI-powered clinical decision support system that helps healthcare professionals analyze clinical notes and generate differential diagnoses using **Retrieval-Augmented Generation (RAG)** technology. It combines natural language processing, vector search, and large language models to provide evidence-based clinical insights.
 
 ### What It Does
 
@@ -1130,36 +1130,30 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 ### ✅ Implemented
 
 1. **Multi-Modal Input**
-
    - Text entry
    - Image upload with OCR
    - Paste from clipboard
 
 2. **Section-Aware Parsing**
-
    - Detects 12+ standard clinical sections
    - HPI, PMH, Labs, Physical Exam, etc.
 
 3. **Hierarchical Chunking**
-
    - Respects section boundaries
    - 1500-char chunks with overlap
    - UUID-tagged for traceability
 
 4. **Vector Search**
-
    - 768-dim embeddings (all-mpnet-base-v2)
    - FAISS cosine similarity
    - Top-K retrieval (configurable)
 
 5. **Two-Step LLM Reasoning**
-
    - Step 1: Extract structured facts
    - Step 2: Generate differential diagnoses
    - Prevents hallucination
 
 6. **Structured Fact Extraction**
-
    - Demographics (age, gender)
    - 14+ symptom categories
    - 5 vital signs
@@ -1167,37 +1161,31 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
    - 12+ laboratory tests
 
 7. **Differential Diagnosis Generation**
-
    - 15+ clinical condition patterns
    - Confidence levels (60-100%)
    - Evidence-based rationale
    - Chunk ID references
 
 8. **SOAP Note Generation**
-
    - Subjective, Objective, Assessment, Plan
    - Standardized clinical format
 
 9. **Evidence Traceability**
-
    - Every diagnosis linked to source chunks
    - Chunk ID → Section → Original text
    - Transparent reasoning
 
 10. **Interactive UI**
-
     - Clean Streamlit interface
     - Expandable sections
     - Debug panels
     - Copy-paste results
 
 11. **Two LLM Modes**
-
     - `local_stub`: Pattern matching (no API, no cost)
     - `openai`: GPT-4/3.5 (requires API key)
 
 12. **Pre-loaded Sample**
-
     - Meningitis clinical case
     - Demonstrates full pipeline
 
@@ -1209,37 +1197,30 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 ### 🚧 Limitations
 
 1. **Pattern Matching Limited**
-
    - Local stub uses keyword detection
    - May miss complex clinical reasoning
    - Best for common presentations
 
 2. **No Clinical Validation**
-
    - Not FDA-approved
    - Not for clinical use
    - Educational/research only
 
 3. **English Only**
-
    - No multi-language support
 
 4. **Single Patient**
-
    - Not designed for batch processing
 
 5. **No EHR Integration**
-
    - Manual copy-paste required
    - No FHIR/HL7 support
 
 6. **Embedding Model Generic**
-
    - Not medical-specific (BioBERT would be better)
    - May miss clinical nuances
 
 7. **No Drug Interactions**
-
    - Doesn't check medication safety
 
 8. **No ICD-10 Codes**
@@ -1252,20 +1233,17 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 ### ⚠️ IMPORTANT DISCLAIMERS
 
 1. **NOT FOR CLINICAL USE**
-
    - This is an educational/research prototype
    - Not FDA-approved or clinically validated
    - Do NOT use for actual patient care
    - Always consult qualified healthcare professionals
 
 2. **NO GUARANTEE OF ACCURACY**
-
    - AI may generate incorrect or incomplete information
    - Pattern matching has high false positive/negative rates
    - Always verify against clinical guidelines
 
 3. **PRIVACY WARNING**
-
    - Do NOT enter real patient data (HIPAA violation)
    - Use only de-identified or synthetic cases
    - No encryption or security measures implemented
@@ -1277,30 +1255,25 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 ### Technical Limitations
 
 1. **Embedding Model**
-
    - Uses general-purpose embeddings (not medical-specific)
    - BioBERT or ClinicalBERT would be more accurate
    - May miss clinical synonyms (e.g., "dyspnea" vs "SOB")
 
 2. **Pattern Matching**
-
    - Local stub uses simple keyword detection
    - Cannot handle complex clinical reasoning
    - May miss atypical presentations
 
 3. **Context Window**
-
    - Chunks limited to 1500 chars
    - Long notes may lose context
    - No cross-chunk reasoning
 
 4. **Single Language**
-
    - English only
    - Medical abbreviations may not be recognized
 
 5. **No Temporal Reasoning**
-
    - Doesn't understand disease progression
    - Can't track changes over time
 
@@ -1315,37 +1288,31 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 ### What This Project Teaches
 
 1. **RAG Architecture**
-
    - Real-world implementation of Retrieval-Augmented Generation
    - How to ground LLM responses in source documents
    - Prevents hallucination through evidence
 
 2. **Vector Search**
-
    - Semantic similarity vs keyword search
    - FAISS indexing and retrieval
    - Embedding model selection
 
 3. **LLM Engineering**
-
    - Two-step reasoning (divide and conquer)
    - Prompt engineering for structured output
    - Tradeoffs: API vs local models
 
 4. **NLP Pipelines**
-
    - Text preprocessing (section detection)
    - Chunking strategies (size, overlap)
    - Information extraction (regex, patterns)
 
 5. **Clinical Informatics**
-
    - SOAP note format
    - Differential diagnosis reasoning
    - Clinical documentation standards
 
 6. **Software Engineering**
-
    - Python project structure
    - Environment management (.env)
    - Dependency optimization (lightweight)
@@ -1359,19 +1326,16 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 ### Use Cases for Learning
 
 1. **Medical Students**
-
    - Learn differential diagnosis reasoning
    - Practice SOAP note writing
    - Understand clinical documentation
 
 2. **AI/ML Students**
-
    - Implement RAG from scratch
    - Compare embedding models
    - Experiment with chunking strategies
 
 3. **Software Engineers**
-
    - Build end-to-end AI applications
    - Integrate LLMs (OpenAI API)
    - Deploy Streamlit apps
@@ -1388,25 +1352,21 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 ### High Priority
 
 1. **Medical-Specific Embeddings**
-
    - Switch to BioBERT or ClinicalBERT
    - Fine-tune on clinical notes
    - Improve medical synonym matching
 
 2. **Advanced LLM Models**
-
    - Support GPT-4, Claude, LLaMA
    - Fine-tuned medical LLMs (Med-PaLM, BioGPT)
    - Self-hosted models (Ollama)
 
 3. **Drug Interaction Checking**
-
    - Integrate drug databases (RxNorm)
    - Check contraindications
    - Alert for dangerous combinations
 
 4. **ICD-10 Code Generation**
-
    - Map diagnoses to billing codes
    - Support medical coding workflow
 
@@ -1418,25 +1378,21 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 ### Medium Priority
 
 6. **Multi-Document Support**
-
    - Compare notes over time
    - Track disease progression
    - Summarize hospital courses
 
 7. **EHR Integration**
-
    - FHIR API support
    - HL7 message parsing
    - Epic/Cerner connectors
 
 8. **Advanced OCR**
-
    - Handwriting recognition
    - Table extraction (lab results)
    - PDF parsing
 
 9. **Multi-Language**
-
    - Spanish, Chinese, etc.
    - Multilingual embeddings
 
@@ -1448,22 +1404,18 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 ### Low Priority
 
 11. **Voice Input**
-
     - Speech-to-text (Whisper)
     - Dictation workflow
 
 12. **Real-Time Collaboration**
-
     - Multi-user editing
     - Comments and annotations
 
 13. **Analytics Dashboard**
-
     - Track diagnosis patterns
     - Quality metrics
 
 14. **API Service**
-
     - REST API for integration
     - Webhook support
 
@@ -1475,22 +1427,18 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 ### Research Directions
 
 16. **Active Learning**
-
     - User feedback loops
     - Model fine-tuning
 
 17. **Explainable AI**
-
     - Attention visualization
     - Counterfactual analysis
 
 18. **Uncertainty Quantification**
-
     - Confidence intervals
     - Epistemic vs aleatoric uncertainty
 
 19. **Causal Reasoning**
-
     - Disease causal graphs
     - Intervention simulation
 
@@ -1502,7 +1450,7 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 
 ## Conclusion
 
-The **Clinical Co-Pilot** demonstrates how Retrieval-Augmented Generation (RAG) can be applied to clinical decision support, combining the power of large language models with the safety and transparency of evidence-based reasoning.
+The **Medox** demonstrates how Retrieval-Augmented Generation (RAG) can be applied to clinical decision support, combining the power of large language models with the safety and transparency of evidence-based reasoning.
 
 ### Key Achievements
 
@@ -1622,7 +1570,7 @@ Diagnosis → Rationale → [evidence: chunk_id] → Chunk → Section → Origi
 
 **Document Version**: 1.0  
 **Last Updated**: November 1, 2025  
-**Author**: Clinical Co-Pilot Development Team  
+**Author**: Medox Development Team  
 **License**: Educational/Research Use Only
 
 **For Questions or Contributions**: [GitHub Repository - Kodi006/IIIT_HACKATHON]
