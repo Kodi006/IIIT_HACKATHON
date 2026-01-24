@@ -20,7 +20,7 @@ export default function Footer() {
                     </div>
                     <div className="flex flex-col">
                         <span className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight">Udbhav Hackathon</span>
-                        <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">2025 Edition</span>
+                        <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">2026 Edition</span>
                     </div>
                 </div>
 

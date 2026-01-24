@@ -80,58 +80,21 @@ export default function NavBar({ activeTab, setActiveTab, showChat, setShowChat 
                         <span className="hidden sm:inline">Dashboard</span>
                     </Link>
 
+                    {/* Chat Button */}
+                    <button
+                        onClick={() => setShowChat(!showChat)}
+                        className={cn(
+                            "relative px-4 py-2.5 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 backdrop-blur-md shadow-lg shadow-black/20",
+                            showChat
+                                ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-white/20"
+                                : "bg-white/80 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10"
+                        )}
+                    >
+                        <MessageCircle className="w-4 h-4" />
+                        <span className="hidden sm:inline">AI Assistant</span>
+                    </button>
                 </div>
             </div>
-
-            {/* Floating Chat Button (FAB) */}
-            <AnimatePresence>
-                {!showChat && (
-                    <motion.button
-                        initial={{ scale: 0, rotate: -180 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        exit={{ scale: 0, rotate: 180 }}
-                        onClick={() => setShowChat(true)}
-                        className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-500 dark:to-purple-500 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all hover:scale-110 active:scale-95"
-                    >
-                        <MessageCircle className="w-6 h-6" />
-                    </motion.button>
-                )}
-            </AnimatePresence>
-
-            {/* Global Chat Overlay */}
-            <AnimatePresence>
-                {showChat && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                        className="fixed bottom-6 right-6 z-50 w-[400px] h-[600px] shadow-2xl glass rounded-2xl border border-white/10 overflow-hidden flex flex-col bg-slate-900/95 backdrop-blur-xl"
-                    >
-                        <div className="bg-slate-900/50 p-3 border-b border-white/5">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/5">
-                                        <Bot className="w-4 h-4 text-blue-400" />
-                                    </div>
-                                    <span className="font-semibold text-white text-sm">
-                                        General Health Q&A
-                                    </span>
-                                </div>
-                                <button
-                                    onClick={() => setShowChat(false)}
-                                    className="text-slate-400 hover:text-white transition-colors p-1 hover:bg-white/5 rounded-full"
-                                >
-                                    ×
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 overflow-hidden relative">
-                            <GeneralChatInterface visible={true} />
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </>
     );
 }

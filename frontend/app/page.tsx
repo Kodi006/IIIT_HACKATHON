@@ -248,9 +248,7 @@ export default function Home() {
                   >
                     <option value="local_stub" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-300">🎮 Local Demo</option>
                     <option value="ollama" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-300">🏠 Ollama (Llama 3.2)</option>
-                    <option value="groq" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-300">⚡ Groq</option>
-                    <option value="gemini" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-300">🧠 Gemini</option>
-                    <option value="openai" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-300">💰 OpenAI</option>
+                    <option value="colab_t4" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-300">🚀 Colab T4 GPU</option>
                   </select>
                 </div>
               </div>

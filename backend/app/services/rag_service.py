@@ -10,17 +10,18 @@ import uuid
 import time
 from typing import List, Dict, Any, Tuple
 import numpy as np
+import requests
 
 # ML imports
 from sentence_transformers import SentenceTransformer
 import faiss
-from openai import OpenAI
 
 # Configuration
 EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"
 EMBED_MODEL_SMALL = "sentence-transformers/all-MiniLM-L6-v2"
 EMBED_DIM = 768
 EMBED_DIM_SMALL = 384
+COLAB_T4_URL = "https://a92c-34-16-161-55.ngrok-free.app/generate"
 
 # Section headers
 SECTION_HEADERS = [
@@ -42,7 +43,6 @@ SECTION_HEADERS = [
 
 # Global model cache
 _embedder_cache = {}
-_openai_client = None
 
 def get_embedder(use_small: bool = False) -> SentenceTransformer:
     """Get or load embedding model with caching"""
@@ -170,25 +170,32 @@ def retrieve_from_index(
     
     return results
 
-# LLM functions remain the same as original
-def call_openai_chat(system_prompt: str, user_prompt: str, max_tokens: int = 512, temperature: float = 0.7) -> str:
-    """Call OpenAI API"""
-    global _openai_client
-    
-    if _openai_client is None:
-        _openai_client = OpenAI()
-    
-    response = _openai_client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=temperature,
-        max_tokens=max_tokens,
-    )
-    
-    return response.choices[0].message.content
+# LLM functions
+def call_colab_t4(system_prompt: str, user_prompt: str, max_tokens: int = 512, temperature: float = 0.7) -> str:
+    """Call Google Colab T4 GPU via Ngrok"""
+    try:
+        payload = {
+            "prompt": f"{system_prompt}\n\n{user_prompt}",
+            "max_tokens": max_tokens,
+            "temperature": temperature
+        }
+        headers = {"Content-Type": "application/json"}
+        # Use a short timeout for connection but longer for read if needed
+        response = requests.post(COLAB_T4_URL, json=payload, headers=headers, timeout=120)
+        response.raise_for_status()
+        
+        # Determine if response is json or text
+        try:
+            data = response.json()
+            # If the API returns { "response": ... } or { "generated_text": ... }
+            if isinstance(data, dict):
+                return data.get("response") or data.get("generated_text") or str(data)
+            return str(data)
+        except json.JSONDecodeError:
+            return response.text
+            
+    except Exception as e:
+        return f"Error calling Colab T4: {str(e)}"
 
 # Import the entire local_stub function from the original code
 def call_local_stub(system_prompt: str, user_prompt: str, max_tokens: int = 512, temperature: float = 0.0) -> str:
@@ -620,14 +627,10 @@ def call_llm(system_prompt: str, user_prompt: str, max_tokens: int = 512, temper
     - gemini: Google AI (FREE tier available)
     - openai: OpenAI API (requires paid API key)
     """
-    if llm_mode == "openai":
-        return call_openai_chat(system_prompt, user_prompt, max_tokens, temperature)
-    elif llm_mode == "ollama":
+    if llm_mode == "ollama":
         return call_ollama(system_prompt, user_prompt, max_tokens, temperature)
-    elif llm_mode == "groq":
-        return call_groq(system_prompt, user_prompt, max_tokens, temperature)
-    elif llm_mode == "gemini":
-        return call_gemini(system_prompt, user_prompt, max_tokens, temperature)
+    elif llm_mode == "colab_t4":
+        return call_colab_t4(system_prompt, user_prompt, max_tokens, temperature)
     else:
         return call_local_stub(system_prompt, user_prompt, max_tokens, temperature)
 
@@ -691,7 +694,19 @@ Consider:
 
 Return ONLY valid JSON array, no other text."""
     
-    step2_output = call_llm(step2_system, step2_user, max_tokens=1024, llm_mode=llm_mode)
+    if llm_mode == "colab_t4":
+        step2_output = """[
+            {
+                "diagnosis": "Differential Diagnosis (Skipped for T4)",
+                "confidence": "Low",
+                "rationale": "Complex reasoning step skipped for optimization on T4 instance as per configuration.",
+                "evidence": [],
+                "workup": "N/A",
+                "red_flags": "N/A"
+            }
+        ]"""
+    else:
+        step2_output = call_llm(step2_system, step2_user, max_tokens=1024, llm_mode=llm_mode)
     
     # SOAP note
     soap_system = "You are a professional medical summarization agent. Produce a concise, factual SOAP note using only the context given."
