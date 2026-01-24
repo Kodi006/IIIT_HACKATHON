@@ -53,6 +53,17 @@ export interface OCRResponse {
   processing_time: number;
 }
 
+export interface ChatMessage {
+  role: string;
+  content: string;
+}
+
+export interface GeneralChatResponse {
+  answer: string;
+  disclaimer: string;
+  processing_time: number;
+}
+
 export const clinicalAPI = {
   // Health check
   health: async () => {
@@ -73,6 +84,21 @@ export const clinicalAPI = {
     });
     return response.data;
   },
+
+  // General Medical Chat
+  generalChat: async (
+    question: string,
+    chatHistory: ChatMessage[],
+    llmMode: string = 'groq'
+  ): Promise<GeneralChatResponse> => {
+    const response = await api.post('/api/general-chat/chat', {
+      question,
+      chat_history: chatHistory,
+      llm_mode: llmMode,
+    });
+    return response.data;
+  },
 };
 
 export default api;
+

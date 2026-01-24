@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Footer from './components/Footer'
+import GeneralChatbot from './components/GeneralChatbot'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -20,6 +21,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950">
           {children}
+          <GeneralChatbot />
           <Footer />
         </div>
       </body>

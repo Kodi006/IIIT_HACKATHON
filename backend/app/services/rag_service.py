@@ -554,7 +554,7 @@ def call_groq(system_prompt: str, user_prompt: str, max_tokens: int = 512, tempe
         client = Groq(api_key=api_key)
         
         response = client.chat.completions.create(
-            model="llama3-8b-8192",  # Fast, free model
+            model="llama-3.1-8b-instant",  # Fast, free model (updated from deprecated llama3-8b-8192)
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
