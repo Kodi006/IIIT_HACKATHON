@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
-# Clinical Co-Pilot - Complete Setup Script
+# Medox - Complete Setup Script
 
-Write-Host "Clinical Co-Pilot v2.0 - Setup Script" -ForegroundColor Cyan
+Write-Host "Medox v2.0 - Setup Script" -ForegroundColor Cyan
 Write-Host "========================================`n" -ForegroundColor Cyan
 
 # Check prerequisites

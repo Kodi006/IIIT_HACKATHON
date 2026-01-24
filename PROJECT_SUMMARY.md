@@ -1,4 +1,4 @@
-# 🎉 Clinical Co-Pilot v2.0 - Project Complete!
+# 🎉 Medox v2.0 - Project Complete!
 
 ## ✅ What Has Been Created
 
@@ -328,7 +328,7 @@ Error:      Red (#EF4444)    - Low confidence & errors
 
 ### 1. Opening (30 seconds)
 
-"Clinical Co-Pilot is an AI-powered clinical decision support system that transforms clinical notes into actionable insights using Retrieval-Augmented Generation."
+"Medox is an AI-powered clinical decision support system that transforms clinical notes into actionable insights using Retrieval-Augmented Generation."
 
 ### 2. Show UI (30 seconds)
 

@@ -1,4 +1,4 @@
-# Clinical Co-Pilot v2.0 🏥✨
+# Medox v2.0 🏥✨
 
 > **Modern, AI-Powered Clinical Decision Support System**
 

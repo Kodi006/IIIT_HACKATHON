@@ -1,20 +1,20 @@
 # LLM Setup Guide - No OpenAI Required! 🎉
 
-This guide explains how to use **FREE alternatives** to OpenAI for your Clinical Co-Pilot application.
+This guide explains how to use **FREE alternatives** to OpenAI for your Medox application.
 
 ---
 
 ## Quick Comparison
 
-| Option | Cost | Speed | Privacy | Setup Difficulty |
-|--------|------|-------|---------|------------------|
-| **Local Demo** | 100% Free | ⚡ Instant | 🔒 Fully Private | ✅ None |
-| **Ollama** | 100% Free | 🚀 Fast | 🔒 Fully Private | ⭐ Easy |
-| **Groq** | 100% Free* | ⚡⚡⚡ Very Fast | ☁️ Cloud | ⭐⭐ Easy |
-| **Gemini** | 100% Free* | 🚀 Fast | ☁️ Cloud | ⭐⭐ Easy |
-| **OpenAI** | 💰 Paid | 🚀 Fast | ☁️ Cloud | ⭐⭐ Easy |
+| Option         | Cost        | Speed            | Privacy          | Setup Difficulty |
+| -------------- | ----------- | ---------------- | ---------------- | ---------------- |
+| **Local Demo** | 100% Free   | ⚡ Instant       | 🔒 Fully Private | ✅ None          |
+| **Ollama**     | 100% Free   | 🚀 Fast          | 🔒 Fully Private | ⭐ Easy          |
+| **Groq**       | 100% Free\* | ⚡⚡⚡ Very Fast | ☁️ Cloud         | ⭐⭐ Easy        |
+| **Gemini**     | 100% Free\* | 🚀 Fast          | ☁️ Cloud         | ⭐⭐ Easy        |
+| **OpenAI**     | 💰 Paid     | 🚀 Fast          | ☁️ Cloud         | ⭐⭐ Easy        |
 
-*Free tier with generous limits
+\*Free tier with generous limits
 
 ---
 
@@ -42,20 +42,23 @@ This guide explains how to use **FREE alternatives** to OpenAI for your Clinical
    - Download for Windows and install
 
 2. **Pull a Model**
+
    ```powershell
    # In your terminal:
    ollama pull mistral
    ```
-   
+
    Other good models:
    - `ollama pull llama2` - Meta's Llama 2
    - `ollama pull phi` - Microsoft's small, fast model
    - `ollama pull codellama` - Code-focused model
 
 3. **Start Ollama Server**
+
    ```powershell
    ollama serve
    ```
+
    Keep this running in a separate terminal
 
 4. **Use in App**
@@ -63,6 +66,7 @@ This guide explains how to use **FREE alternatives** to OpenAI for your Clinical
    - Click Analyze!
 
 ### Benefits:
+
 - ✅ 100% free forever
 - ✅ Runs on your machine (no internet needed)
 - ✅ Private - your data never leaves your computer
@@ -84,11 +88,13 @@ This guide explains how to use **FREE alternatives** to OpenAI for your Clinical
 
 2. **Add to Environment**
    Edit your `.env` file in the `backend` folder:
+
    ```
    GROQ_API_KEY=your_key_here
    ```
 
 3. **Install Package**
+
    ```powershell
    pip install groq
    ```
@@ -98,6 +104,7 @@ This guide explains how to use **FREE alternatives** to OpenAI for your Clinical
    - Click Analyze!
 
 ### Benefits:
+
 - ✅ FREE with generous limits
 - ✅⚡ Extremely fast inference
 - ✅ Uses Llama 3 models
@@ -118,11 +125,13 @@ This guide explains how to use **FREE alternatives** to OpenAI for your Clinical
 
 2. **Add to Environment**
    Edit your `.env` file in the `backend` folder:
+
    ```
    GEMINI_API_KEY=your_key_here
    ```
 
 3. **Install Package**
+
    ```powershell
    pip install google-generativeai
    ```
@@ -132,6 +141,7 @@ This guide explains how to use **FREE alternatives** to OpenAI for your Clinical
    - Click Analyze!
 
 ### Benefits:
+
 - ✅ FREE tier available
 - ✅ Google's latest AI technology
 - ✅ Good performance
@@ -152,21 +162,26 @@ If you already have an OpenAI API key, you can still use it:
 ## Troubleshooting
 
 ### "ERROR: Ollama is not running"
+
 - Make sure you ran `ollama serve` in a separate terminal
 - Check that Ollama is installed
 
 ### "ERROR: GROQ_API_KEY not found"
+
 - Make sure you added it to the `.env` file
 - Restart the backend server after adding env variables
 
 ### "ERROR: groq package not installed"
+
 - Run: `pip install groq`
 
 ### "ERROR: GEMINI_API_KEY not found"
+
 - Make sure you added it to the `.env` file
 - Restart the backend server
 
 ### "ERROR: google-generativeai package not installed"
+
 - Run: `pip install google-generativeai`
 
 ---
@@ -188,6 +203,7 @@ This gives you 3 options to choose from depending on your needs!
 ### Change Ollama Model
 
 Edit `backend/app/services/rag_service.py`, line ~478:
+
 ```python
 "model": "mistral",  # Change to: llama2, phi, codellama, etc.
 ```
@@ -195,6 +211,7 @@ Edit `backend/app/services/rag_service.py`, line ~478:
 ### Change Groq Model
 
 Edit `backend/app/services/rag_service.py`, line ~519:
+
 ```python
 model="llama3-8b-8192",  # Change to other Groq models
 ```
@@ -204,6 +221,7 @@ model="llama3-8b-8192",  # Change to other Groq models
 ## Performance Comparison
 
 Based on typical use:
+
 - **Local Demo**: Instant (0.1s) - but not real AI
 - **Ollama**: 2-5s per request - depends on your hardware
 - **Groq**: 0.3-1s per request - very fast! ⚡

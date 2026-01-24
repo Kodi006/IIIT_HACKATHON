@@ -1,6 +1,6 @@
-# Clinical Co-Pilot Frontend
+# Medox Frontend
 
-Modern, stunning web interface for the Clinical Co-Pilot AI system.
+Modern, stunning web interface for the Medox AI system.
 
 ## Built With
 

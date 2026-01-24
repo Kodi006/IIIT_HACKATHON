@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
-# Clinical Co-Pilot - Development Startup Script
+# Medox - Development Startup Script
 
-Write-Host "Starting Clinical Co-Pilot v2.0..." -ForegroundColor Cyan
+Write-Host "Starting Medox v2.0..." -ForegroundColor Cyan
 Write-Host "====================================`n" -ForegroundColor Cyan
 
 # Get workspace path
