@@ -139,7 +139,12 @@ export default function Home() {
     <div className="min-h-screen bg-transparent text-slate-100 selection:bg-fuchsia-500/40 overflow-hidden relative">
       <DigitalAurora />
 
-      <NavBar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <NavBar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        showChat={showChat}
+        setShowChat={setShowChat}
+      />
 
       {/* Spacer for fixed navbar */}
       <div className="h-24" />
@@ -194,7 +199,7 @@ export default function Home() {
               <div className="grid md:grid-cols-4 gap-4 mt-16 w-full max-w-4xl">
                 {[
                   { icon: Brain, title: 'RAG-Powered', desc: 'Retrieval-augmented generation', color: 'blue' },
-                  { icon: MessageCircle, title: 'AI Chat', desc: 'Interactive Q&A', color: 'purple' },
+                  { icon: MessageCircle, title: 'AI Chat', desc: 'Interactive Q&A', color: 'purple', onClick: () => setShowChat(true) },
                   { icon: FileSearch, title: 'SOAP Notes', desc: 'Auto-generated summaries', color: 'green' },
                   { icon: Activity, title: 'Evidence', desc: 'Full traceability', color: 'pink' },
                 ].map((feature, idx) => (
@@ -203,7 +208,8 @@ export default function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 * idx }}
-                    className={`feature-card glass rounded-xl p-5 border border-${feature.color}-500/20 text-left`}
+                    onClick={feature.onClick}
+                    className={`feature-card glass rounded-xl p-5 border border-${feature.color}-500/20 text-left ${feature.onClick ? 'cursor-pointer hover:bg-white/5 transition-colors' : ''}`}
                   >
                     <feature.icon className={`w-8 h-8 text-${feature.color}-400 mb-3`} />
                     <h3 className="font-bold text-white mb-1">{feature.title}</h3>
