@@ -12,8 +12,7 @@ import { clinicalAPI, type AnalysisResponse, type DiagnosisItem } from '@/lib/ap
 import { cn, formatConfidence } from '@/lib/utils';
 import ChatInterface from './components/ChatInterface';
 import NavBar from './components/NavBar';
-import NeuralBackground from './components/NeuralBackground';
-
+import DigitalAurora from '@/app/components/DigitalAurora';
 // Sample clinical note
 const SAMPLE_NOTE = `CHIEF COMPLAINT: Fever, headache, and neck stiffness for 3 days.
 
@@ -137,18 +136,8 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-purple-500/30 overflow-hidden relative">
-      {/* 1. Gradient Orbs Layer (Bottom) */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="gradient-orb gradient-orb-1" />
-        <div className="gradient-orb gradient-orb-2" />
-        <div className="gradient-orb gradient-orb-3" />
-      </div>
-
-      {/* 2. Neural Network Layer (Middle) */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <NeuralBackground />
-      </div>
+    <div className="min-h-screen bg-transparent text-slate-100 selection:bg-fuchsia-500/40 overflow-hidden relative">
+      <DigitalAurora />
 
       <NavBar activeTab={activeTab} setActiveTab={setActiveTab} />
 
@@ -167,13 +156,13 @@ export default function Home() {
               exit={{ opacity: 0, y: -10 }}
               className="flex flex-col items-center justify-center pt-12 text-center"
             >
-              <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full glass border border-blue-500/30 shadow-lg shadow-blue-500/20">
-                <Sparkles className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-blue-300 font-medium">AI-Powered Clinical Intelligence</span>
+              <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full glass border border-fuchsia-500/40 shadow-lg shadow-fuchsia-500/30">
+                <Sparkles className="w-4 h-4 text-fuchsia-400 animate-pulse" />
+                <span className="text-sm text-fuchsia-200 font-medium">AI-Powered Clinical Intelligence</span>
               </div>
 
               <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-pink-400 animate-gradient">
                   Clinical Co-Pilot
                 </span>
                 <span className="block text-2xl md:text-3xl mt-4 text-slate-500 font-normal">
@@ -189,7 +178,7 @@ export default function Home() {
               <div className="flex gap-4">
                 <button
                   onClick={() => setActiveTab('note')}
-                  className="px-8 py-4 bg-white text-slate-950 rounded-full font-bold hover:bg-slate-200 transition-all flex items-center gap-2 shadow-xl shadow-white/10"
+                  className="px-8 py-4 bg-gradient-to-r from-fuchsia-500 to-cyan-500 text-white rounded-full font-bold hover:from-fuchsia-400 hover:to-cyan-400 transition-all flex items-center gap-2 shadow-xl shadow-fuchsia-500/40 hover:shadow-fuchsia-500/60"
                 >
                   Get Started <ChevronRight className="w-5 h-5" />
                 </button>
@@ -258,10 +247,10 @@ export default function Home() {
               </div>
 
               {/* Image Upload Card */}
-              <div className="glass rounded-2xl p-6 border border-blue-500/20">
+              <div className="glass rounded-2xl p-6 border border-cyan-500/30 shadow-lg shadow-cyan-500/10">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 rounded-lg bg-blue-500/20">
-                    <Upload className="w-5 h-5 text-blue-400" />
+                  <div className="p-2 rounded-lg bg-cyan-500/20">
+                    <Upload className="w-5 h-5 text-cyan-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-white">Upload Handwriting/Image</h3>
                 </div>
@@ -292,7 +281,7 @@ export default function Home() {
               </div>
 
               {/* Text Input Card */}
-              <div className="glass rounded-2xl p-6 border border-purple-500/20">
+              <div className="glass rounded-2xl p-6 border border-fuchsia-500/30 shadow-lg shadow-fuchsia-500/10">
                 <textarea
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
@@ -308,7 +297,7 @@ export default function Home() {
                       "px-8 py-3 rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg",
                       isAnalyzing || !noteText.trim()
                         ? "bg-slate-800 text-slate-500 cursor-not-allowed"
-                        : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-purple-500/20 hover:shadow-purple-500/40"
+                        : "bg-gradient-to-r from-cyan-500 via-fuchsia-500 to-pink-500 hover:from-cyan-400 hover:via-fuchsia-400 hover:to-pink-400 text-white shadow-fuchsia-500/30 hover:shadow-fuchsia-500/50"
                     )}
                   >
                     {isAnalyzing ? (
@@ -373,11 +362,11 @@ export default function Home() {
               )}
 
               {isAnalyzing && (
-                <div className="flex flex-col items-center justify-center p-12 glass rounded-3xl border border-blue-500/20">
+                <div className="flex flex-col items-center justify-center p-12 glass rounded-3xl border border-fuchsia-500/30 shadow-2xl shadow-fuchsia-500/20">
                   <div className="relative mb-8">
-                    <div className="absolute inset-0 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin w-20 h-20"></div>
+                    <div className="absolute inset-0 border-4 border-fuchsia-500/20 border-t-fuchsia-500 rounded-full animate-spin w-20 h-20"></div>
                     <div className="w-20 h-20 flex items-center justify-center">
-                      <Brain className="w-8 h-8 text-blue-400" />
+                      <Brain className="w-8 h-8 text-fuchsia-400" />
                     </div>
                   </div>
                   <h3 className="text-2xl font-bold text-white mb-6">Analyzing Clinical Data</h3>
@@ -425,8 +414,8 @@ export default function Home() {
                         className={cn(
                           "px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2",
                           showChat
-                            ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                            : "bg-purple-600 text-white hover:bg-purple-500"
+                            ? "bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30"
+                            : "bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white hover:from-fuchsia-500 hover:to-pink-500 shadow-lg shadow-fuchsia-500/30"
                         )}
                       >
                         <MessageCircle className="w-4 h-4" />
@@ -449,7 +438,7 @@ export default function Home() {
                     >
 
                       {/* SOAP Summary - Always here */}
-                      <div className="glass rounded-2xl p-6 border border-green-500/20">
+                      <div className="glass rounded-2xl p-6 border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
                             <FileSearch className="w-5 h-5 text-green-400" />
@@ -478,7 +467,7 @@ export default function Home() {
                       </div>
 
                       {/* DDx List - Always Visible */}
-                      <div className="glass rounded-2xl p-6 border border-pink-500/20">
+                      <div className="glass rounded-2xl p-6 border border-pink-500/30 shadow-lg shadow-pink-500/10">
                         <div className="flex items-center gap-3 mb-6">
                           <Activity className="w-5 h-5 text-pink-400" />
                           <h3 className="text-lg font-semibold text-white">Differential Diagnosis</h3>
