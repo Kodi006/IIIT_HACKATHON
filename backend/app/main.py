@@ -11,7 +11,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from app.routes import analysis, ocr, health, chat, general_chat
+from app.routes import analysis, ocr, health, chat, general_chat, history
+from app.database import init_db
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -37,6 +38,12 @@ app.include_router(ocr.router, prefix="/api/ocr", tags=["OCR"])
 app.include_router(analysis.router, prefix="/api/analysis", tags=["Analysis"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(general_chat.router, prefix="/api/general-chat", tags=["General Chat"])
+app.include_router(history.router, prefix="/api/history", tags=["History"])
+
+# Initialize database on startup
+@app.on_event("startup")
+async def startup_event():
+    init_db()
 
 # Root endpoint
 @app.get("/")

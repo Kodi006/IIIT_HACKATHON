@@ -64,6 +64,32 @@ export interface GeneralChatResponse {
   processing_time: number;
 }
 
+// Dashboard / History types
+export interface HistoryRecord {
+  id: number;
+  created_at: string;
+  note_preview: string;
+  primary_diagnosis: string | null;
+  confidence: string | null;
+  processing_time: number;
+  llm_mode: string;
+}
+
+export interface HistoryResponse {
+  records: HistoryRecord[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
+export interface DashboardStats {
+  total_analyses: number;
+  avg_processing_time: number;
+  most_common_diagnosis: string | null;
+  most_common_count: number;
+  confidence_distribution: Record<string, number>;
+}
+
 export const clinicalAPI = {
   // Health check
   health: async () => {
@@ -98,7 +124,29 @@ export const clinicalAPI = {
     });
     return response.data;
   },
+
+  // Dashboard History
+  getHistory: async (skip: number = 0, limit: number = 20): Promise<HistoryResponse> => {
+    const response = await api.get(`/api/history?skip=${skip}&limit=${limit}`);
+    return response.data;
+  },
+
+  getStats: async (): Promise<DashboardStats> => {
+    const response = await api.get('/api/history/stats');
+    return response.data;
+  },
+
+  getAnalysisById: async (id: number) => {
+    const response = await api.get(`/api/history/${id}`);
+    return response.data;
+  },
+
+  deleteAnalysis: async (id: number) => {
+    const response = await api.delete(`/api/history/${id}`);
+    return response.data;
+  },
 };
 
 export default api;
+
 
