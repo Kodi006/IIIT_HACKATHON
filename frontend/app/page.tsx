@@ -12,6 +12,7 @@ import { clinicalAPI, type AnalysisResponse, type DiagnosisItem } from '@/lib/ap
 import { cn, formatConfidence } from '@/lib/utils';
 import ChatInterface from './components/ChatInterface';
 import NavBar from './components/NavBar';
+
 import DigitalAurora from '@/app/components/DigitalAurora';
 // Sample clinical note
 const SAMPLE_NOTE = `CHIEF COMPLAINT: Fever, headache, and neck stiffness for 3 days.
@@ -54,6 +55,7 @@ export default function Home() {
   const [llmMode, setLlmMode] = useState<string>('ollama');
   const [selectedDiagnosis, setSelectedDiagnosis] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
+  const [showAnalysisChat, setShowAnalysisChat] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [copied, setCopied] = useState(false);
 
@@ -417,12 +419,13 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="grid gap-6 lg:grid-cols-3">
+                  <div className="grid gap-6 lg:grid-cols-5">
                     {/* Left Column: SOAP & Diagnosis */}
                     <motion.div
                       layout
-                      className="lg:col-span-2 space-y-6"
+                      className="lg:col-span-3 space-y-6"
                     >
+
 
                       {/* SOAP Summary - Always here */}
                       <div className="glass rounded-2xl p-6 border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
@@ -506,10 +509,10 @@ export default function Home() {
                                       <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-pink-600 dark:group-hover:text-pink-200 transition-colors">{dx.diagnosis}</h3>
                                     </div>
                                   </div>
-                                  <div className={cn("px-2 py-1 rounded text-xs font-bold border", 
-                                  conf.color === 'text-green-400' ? 'bg-green-100 text-green-700 border-green-200 dark:bg-slate-800 dark:text-green-400 dark:border-slate-700' :
-                                  conf.color === 'text-yellow-400' ? 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-slate-800 dark:text-yellow-400 dark:border-slate-700' :
-                                  'bg-red-100 text-red-700 border-red-200 dark:bg-slate-800 dark:text-red-400 dark:border-slate-700'
+                                  <div className={cn("px-2 py-1 rounded text-xs font-bold border",
+                                    conf.color === 'text-green-400' ? 'bg-green-100 text-green-700 border-green-200 dark:bg-slate-800 dark:text-green-400 dark:border-slate-700' :
+                                      conf.color === 'text-yellow-400' ? 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-slate-800 dark:text-yellow-400 dark:border-slate-700' :
+                                        'bg-red-100 text-red-700 border-red-200 dark:bg-slate-800 dark:text-red-400 dark:border-slate-700'
                                   )}>
                                     {dx.confidence}
                                   </div>
@@ -563,9 +566,50 @@ export default function Home() {
                     </motion.div>
 
                     {/* Right Column: Chat (Desktop) */}
-                    <div className="hidden lg:block lg:col-span-1">
-                      <div className="sticky top-28">
-                         <ChatInterface analysisData={result} visible={true} llmMode={llmMode} />
+                    <div className="hidden lg:block lg:col-span-2">
+                      <div className="sticky top-28 space-y-4">
+                        <AnimatePresence mode="wait">
+                          {!showAnalysisChat ? (
+                            <motion.div
+                              key="start-chat"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              className="glass rounded-2xl p-6 border border-purple-500/30 shadow-lg shadow-purple-500/10 text-center"
+                            >
+                              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center mx-auto mb-4 border border-purple-500/20">
+                                <MessageCircle className="w-8 h-8 text-purple-400" />
+                              </div>
+                              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Have Questions?</h3>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+                                Chat with the AI to explore the diagnosis, ask about parameters, or request further explanations.
+                              </p>
+                              <button
+                                onClick={() => setShowAnalysisChat(true)}
+                                className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg shadow-purple-500/25 transition-all flex items-center justify-center gap-2 group"
+                              >
+                                <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                Start Chatting
+                              </button>
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="chat-interface"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              className="relative"
+                            >
+                              <button
+                                onClick={() => setShowAnalysisChat(false)}
+                                className="absolute -top-3 -right-3 z-50 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-white rounded-full p-1.5 border border-slate-300 dark:border-slate-600 shadow-md hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                              </button>
+                              <ChatInterface analysisData={result} visible={true} llmMode={llmMode} />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     </div>
                   </div>
@@ -576,27 +620,7 @@ export default function Home() {
 
         </AnimatePresence>
 
-        {/* Chat Overlay */}
-        <AnimatePresence>
-          {showChat && (
-            <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="fixed bottom-4 right-4 z-50 w-full max-w-md pointer-events-auto"
-            >
-              <div className="relative">
-                <button
-                  onClick={() => setShowChat(false)}
-                  className="absolute -top-3 -right-3 z-50 bg-slate-900 dark:bg-slate-700 text-white rounded-full p-1.5 border border-slate-700 shadow-lg hover:bg-slate-800 transition-colors"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-                <ChatInterface analysisData={result} visible={true} llmMode={llmMode} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
       </main>
     </div>
   );

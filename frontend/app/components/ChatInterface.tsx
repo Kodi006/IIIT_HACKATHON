@@ -21,10 +21,15 @@ export default function ChatInterface({ analysisData, visible, llmMode }: ChatIn
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTo({
+                top: scrollContainerRef.current.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
     };
 
     useEffect(() => {
@@ -111,7 +116,8 @@ export default function ChatInterface({ analysisData, visible, llmMode }: ChatIn
             </div>
 
             {/* Messages Container - Tall for expanded view */}
-            <div className="h-[400px] lg:h-[75vh] overflow-y-auto p-4 space-y-4 bg-white/50 dark:bg-slate-900/30">
+            {/* Messages Container - Tall for expanded view */}
+            <div ref={scrollContainerRef} className="h-[350px] lg:h-[400px] overflow-y-auto p-4 space-y-4 bg-white/50 dark:bg-slate-900/30">
                 {messages.length === 0 && (
                     <div className="flex items-center justify-center h-full">
                         <p className="text-slate-500 italic text-center">
@@ -185,7 +191,7 @@ export default function ChatInterface({ analysisData, visible, llmMode }: ChatIn
                     </motion.div>
                 )}
 
-                <div ref={messagesEndRef} />
+
             </div>
 
             {/* Input Area */}
