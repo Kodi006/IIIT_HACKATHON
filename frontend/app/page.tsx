@@ -408,33 +408,13 @@ export default function Home() {
                         Processed in {result.processing_time.toFixed(2)}s
                       </p>
                     </div>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setShowChat(!showChat)}
-                        className={cn(
-                          "px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2",
-                          showChat
-                            ? "bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30"
-                            : "bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white hover:from-fuchsia-500 hover:to-pink-500 shadow-lg shadow-fuchsia-500/30"
-                        )}
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                        {showChat ? 'Hide Chat' : 'Chat with AI'}
-                      </button>
-                    </div>
                   </div>
 
-                  <div className={cn(
-                    "grid gap-8 transition-all duration-500",
-                    showChat ? "lg:grid-cols-2" : "lg:grid-cols-3"
-                  )}>
-                    {/* Left Column: SOAP & Diagnosis (if chat closed) */}
+                  <div className="grid gap-8 lg:grid-cols-2">
+                    {/* Left Column: SOAP & Diagnosis */}
                     <motion.div
                       layout
-                      className={cn(
-                        "space-y-6 transition-all duration-500",
-                        showChat ? "lg:col-span-1" : "lg:col-span-2"
-                      )}
+                      className="lg:col-span-2 space-y-6"
                     >
 
                       {/* SOAP Summary - Always here */}
@@ -569,51 +549,6 @@ export default function Home() {
                         </div>
                       </div>
 
-                    </motion.div>
-
-                    {/* Right Column: Chat + Diagnosis (if chat open) */}
-                    <motion.div
-                      layout
-                      className={cn(
-                        "transition-all duration-500 ease-in-out",
-                        showChat ? "lg:col-span-1" : "lg:col-span-1"
-                      )}
-                    >
-                      <div className="space-y-6">
-
-                        {/* Chat Interface - Stacks below diagnosis if open */}
-                        {showChat ? (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <ChatInterface analysisData={result} visible={true} llmMode={llmMode} />
-                          </motion.div>
-                        ) : (
-                          <div className="glass rounded-2xl p-6 border border-purple-500/20 text-center sticky top-28">
-                            <MessageCircle className="w-12 h-12 text-purple-400 mx-auto mb-4 opacity-50" />
-                            <h3 className="text-lg font-medium text-white mb-2">AI Assistant Ready</h3>
-                            <p className="text-sm text-slate-400 mb-6">Ask follow-up questions about the patient's note and the diagnosis.</p>
-                            <button
-                              onClick={() => setShowChat(true)}
-                              className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold transition-all"
-                            >
-                              Start Chatting
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Helper Tip */}
-                        {!showChat && (
-                          <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 sticky top-[300px]">
-                            <p className="text-xs text-blue-300 leading-relaxed">
-                              <span className="font-bold">Tip:</span> Click on any diagnosis card to see the specific evidence chunks used by the AI to reach that conclusion.
-                            </p>
-                          </div>
-                        )}
-                      </div>
                     </motion.div>
                   </div>
                 </div>
