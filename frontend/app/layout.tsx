@@ -18,8 +18,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={inter.className}>
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950">
+      <body className={inter.className} style={{ background: 'transparent' }}>
+        <div className="min-h-screen">
           {children}
           <GeneralChatbot />
           <Footer />
