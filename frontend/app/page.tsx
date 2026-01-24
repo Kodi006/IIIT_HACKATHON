@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload, FileText, Brain, Activity, Loader2,
   AlertCircle, CheckCircle, Sparkles, TrendingUp,
-  FileSearch, Stethoscope, ChevronRight, MessageCircle, Copy, Check
+  FileSearch, Stethoscope, ChevronRight, MessageCircle, Copy, Check, Heart, Mic, MicOff
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { clinicalAPI, type AnalysisResponse, type DiagnosisItem } from '@/lib/api';
@@ -59,10 +59,88 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('home');
   const [copied, setCopied] = useState(false);
 
+  // Patient Friendly Mode
+  const [patientLetter, setPatientLetter] = useState<string | null>(null);
+  const [isGeneratingLetter, setIsGeneratingLetter] = useState(false);
+
+  // Voice Dictation
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  const toggleListening = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Your browser does not support voice dictation.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event: any) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          const transcript = event.results[i][0].transcript.trim();
+          setNoteText(prev => prev + (prev.endsWith(' ') ? '' : ' ') + transcript);
+        }
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleGeneratePatientLetter = async () => {
+    if (!result) return;
+    
+    setIsGeneratingLetter(true);
+    try {
+      // Use the General Chat API to generate the letter based on the current context
+      // We pass the SOAP note as the primary context
+      const prompt = `Rewrite this medical summary as a simple, empathetic letter to the patient, explaining their condition and next steps in plain English. Avoid medical jargon where possible.
+      
+      MEDICAL SUMMARY:
+      ${result.soap}
+      `;
+      
+      // We use 'ollama' or the current selected mode
+      const response = await clinicalAPI.generalChat(prompt, [], llmMode === 'local_stub' ? 'ollama' : llmMode);
+      
+      setPatientLetter(response.answer);
+    } catch (err) {
+      console.error("Failed to generate patient letter:", err);
+      // Fallback simple message if API fails
+      setPatientLetter("I apologize, but I couldn't generate the personalized letter at this moment. Please discuss the details directly with your care provider.");
+    } finally {
+      setIsGeneratingLetter(false);
+    }
   };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -288,7 +366,20 @@ export default function Home() {
               </div>
 
               {/* Text Input Card */}
-              <div className="glass rounded-2xl p-6 border border-fuchsia-500/30 shadow-lg shadow-fuchsia-500/10">
+              <div className="glass rounded-2xl p-6 border border-fuchsia-500/30 shadow-lg shadow-fuchsia-500/10 relative">
+                <button
+                  onClick={toggleListening}
+                  className={cn(
+                    "absolute top-8 right-8 p-2 rounded-full transition-all shadow-lg z-10",
+                    isListening
+                      ? "bg-red-500 text-white animate-pulse shadow-red-500/50"
+                      : "bg-white/80 dark:bg-slate-800/80 text-slate-500 hover:text-fuchsia-500 shadow-black/5 backdrop-blur-sm"
+                  )}
+                  title={isListening ? "Stop Dictation" : "Start Voice Dictation"}
+                >
+                  {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                </button>
+
                 <textarea
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
@@ -415,6 +506,20 @@ export default function Home() {
                         Processed in {result.processing_time.toFixed(2)}s
                       </p>
                     </div>
+
+                    {/* Explain Like I'm 5 Button */}
+                    <button
+                      onClick={handleGeneratePatientLetter}
+                      disabled={isGeneratingLetter}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-medium shadow-lg shadow-pink-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95"
+                    >
+                      {isGeneratingLetter ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Heart className="w-4 h-4 fill-current" />
+                      )}
+                      <span>{isGeneratingLetter ? 'Writing Letter...' : 'Explain to Patient'}</span>
+                    </button>
                   </div>
 
                   <div className="grid gap-6 lg:grid-cols-5">
@@ -424,6 +529,41 @@ export default function Home() {
                       className="lg:col-span-3 space-y-6"
                     >
 
+                      {/* Patient Letter Card (Conditional) */}
+                      <AnimatePresence>
+                        {patientLetter && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                            exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                            className="glass rounded-2xl p-6 border border-pink-500/30 shadow-lg shadow-pink-500/10 bg-pink-50/50 dark:bg-pink-900/10"
+                          >
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-500/20">
+                                  <Heart className="w-5 h-5 text-pink-600 dark:text-pink-400 fill-pink-600/20" />
+                                </div>
+                                <div>
+                                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Patient Letter</h3>
+                                  <p className="text-xs text-slate-500 dark:text-slate-400">Simplified explanation for patient</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => copyToClipboard(patientLetter)}
+                                className="p-2 hover:bg-pink-100 dark:hover:bg-pink-500/20 rounded-full transition-colors text-pink-600 dark:text-pink-400"
+                                title="Copy letter"
+                              >
+                                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                              </button>
+                            </div>
+                            <div className="prose prose-pink dark:prose-invert max-w-none">
+                              <div className="text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap font-sans text-base bg-white/50 dark:bg-black/20 p-4 rounded-xl border border-pink-100 dark:border-pink-500/10">
+                                {patientLetter}
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
 
                       {/* SOAP Summary - Always here */}
                       <div className="glass rounded-2xl p-6 border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
