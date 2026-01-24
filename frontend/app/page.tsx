@@ -241,13 +241,13 @@ export default function Home() {
                   <select
                     value={llmMode}
                     onChange={(e) => setLlmMode(e.target.value as any)}
-                    className="bg-transparent text-sm text-slate-300 focus:outline-none cursor-pointer"
+                    className="bg-slate-900 text-sm text-slate-300 focus:outline-none cursor-pointer p-1 rounded-md"
                   >
-                    <option value="local_stub">🎮 Local Demo</option>
-                    <option value="ollama">🏠 Ollama (Llama 3.2)</option>
-                    <option value="groq">⚡ Groq</option>
-                    <option value="gemini">🧠 Gemini</option>
-                    <option value="openai">💰 OpenAI</option>
+                    <option value="local_stub" className="bg-slate-900 text-slate-300">🎮 Local Demo</option>
+                    <option value="ollama" className="bg-slate-900 text-slate-300">🏠 Ollama (Llama 3.2)</option>
+                    <option value="groq" className="bg-slate-900 text-slate-300">⚡ Groq</option>
+                    <option value="gemini" className="bg-slate-900 text-slate-300">🧠 Gemini</option>
+                    <option value="openai" className="bg-slate-900 text-slate-300">💰 OpenAI</option>
                   </select>
                 </div>
               </div>
