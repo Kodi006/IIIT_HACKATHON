@@ -51,7 +51,7 @@ export default function Home() {
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [result, setResult] = useState<AnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [llmMode, setLlmMode] = useState<string>('local_stub');
+  const [llmMode, setLlmMode] = useState<string>('ollama');
   const [selectedDiagnosis, setSelectedDiagnosis] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
@@ -417,7 +417,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="grid gap-8 lg:grid-cols-2">
+                  <div className="grid gap-6 lg:grid-cols-3">
                     {/* Left Column: SOAP & Diagnosis */}
                     <motion.div
                       layout
@@ -561,6 +561,13 @@ export default function Home() {
                       </div>
 
                     </motion.div>
+
+                    {/* Right Column: Chat (Desktop) */}
+                    <div className="hidden lg:block lg:col-span-1">
+                      <div className="sticky top-28">
+                         <ChatInterface analysisData={result} visible={true} llmMode={llmMode} />
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
