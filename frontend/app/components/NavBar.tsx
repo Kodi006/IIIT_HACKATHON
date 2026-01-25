@@ -44,6 +44,19 @@ export default function NavBar({ activeTab, setActiveTab, showChat, setShowChat 
     return (
         <>
             <div className="fixed top-0 left-0 right-0 z-[100] flex justify-center p-4 bg-gradient-to-b from-white/80 via-white/50 to-transparent dark:from-slate-950/80 dark:via-slate-950/50 dark:to-transparent backdrop-blur-sm pointer-events-none">
+
+                {/* Left-aligned Dashboard Link - Moved & Resized */}
+                <div className="absolute left-6 top-5 pointer-events-auto z-[102]">
+                    <Link
+                        href="/dashboard"
+                        className="px-6 py-3 rounded-full flex items-center gap-3 text-base font-semibold transition-all duration-300 backdrop-blur-md shadow-lg shadow-black/5 bg-white/90 dark:bg-slate-900/90 text-slate-600 dark:text-slate-200 border border-slate-200 dark:border-white/10 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/20 hover:scale-105 active:scale-95 cursor-pointer"
+                    >
+                        <BarChart3 className="w-5 h-5" />
+                        <span className="hidden sm:inline">Dashboard</span>
+                    </Link>
+                </div>
+
+                {/* Center Navigation Tabs */}
                 <div className="flex bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-white/10 p-1.5 rounded-full shadow-2xl shadow-slate-200/50 dark:shadow-black/50 pointer-events-auto relative z-[101]">
                     {tabs.map((tab) => (
                         <button
@@ -78,22 +91,11 @@ export default function NavBar({ activeTab, setActiveTab, showChat, setShowChat 
                     <button
                         type="button"
                         onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                        className="p-2.5 rounded-full bg-white/80 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all backdrop-blur-md shadow-lg shadow-black/5 cursor-pointer"
+                        className="p-4 rounded-full bg-white/80 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all backdrop-blur-md shadow-lg shadow-black/5 cursor-pointer"
                         aria-label="Toggle Theme"
                     >
-                        {mounted ? (theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />) : <Sun className="w-4 h-4 opacity-0" />}
+                        {mounted ? (theme === 'dark' ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />) : <Sun className="w-6 h-6 opacity-0" />}
                     </button>
-
-                    {/* Dashboard Link */}
-                    <Link
-                        href="/dashboard"
-                        className="px-4 py-2.5 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 backdrop-blur-md shadow-lg shadow-black/5 bg-white/80 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer"
-                    >
-                        <BarChart3 className="w-4 h-4" />
-                        <span className="hidden sm:inline">Dashboard</span>
-                    </Link>
-
-
                 </div>
             </div>
 

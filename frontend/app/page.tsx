@@ -2,10 +2,11 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { generateClinicalReport } from '@/lib/reportGenerator';
 import {
   Upload, FileText, Brain, Activity, Loader2,
   AlertCircle, CheckCircle, Sparkles, TrendingUp,
-  FileSearch, Stethoscope, ChevronRight, MessageCircle, Copy, Check, Heart, Mic, MicOff
+  FileSearch, Stethoscope, ChevronRight, MessageCircle, Copy, Check, Heart, Mic, MicOff, FileDown
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { clinicalAPI, type AnalysisResponse, type DiagnosisItem } from '@/lib/api';
@@ -119,7 +120,7 @@ export default function Home() {
 
   const handleGeneratePatientLetter = async () => {
     if (!result) return;
-    
+
     setIsGeneratingLetter(true);
     try {
       // Use the General Chat API to generate the letter based on the current context
@@ -129,10 +130,10 @@ export default function Home() {
       MEDICAL SUMMARY:
       ${result.soap}
       `;
-      
+
       // We use 'ollama' or the current selected mode
       const response = await clinicalAPI.generalChat(prompt, [], llmMode === 'local_stub' ? 'ollama' : llmMode);
-      
+
       setPatientLetter(response.answer);
     } catch (err) {
       console.error("Failed to generate patient letter:", err);
@@ -507,19 +508,29 @@ export default function Home() {
                       </p>
                     </div>
 
-                    {/* Explain Like I'm 5 Button */}
-                    <button
-                      onClick={handleGeneratePatientLetter}
-                      disabled={isGeneratingLetter}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-medium shadow-lg shadow-pink-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95"
-                    >
-                      {isGeneratingLetter ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Heart className="w-4 h-4 fill-current" />
-                      )}
-                      <span>{isGeneratingLetter ? 'Writing Letter...' : 'Explain to Patient'}</span>
-                    </button>
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => generateClinicalReport(result)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium transition-all transform hover:scale-105 active:scale-95"
+                      >
+                        <FileDown className="w-4 h-4" />
+                        <span>Download PDF</span>
+                      </button>
+
+                      <button
+                        onClick={handleGeneratePatientLetter}
+                        disabled={isGeneratingLetter}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-medium shadow-lg shadow-pink-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95"
+                      >
+                        {isGeneratingLetter ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Heart className="w-4 h-4 fill-current" />
+                        )}
+                        <span>{isGeneratingLetter ? 'Writing Letter...' : 'Explain to Patient'}</span>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid gap-6 lg:grid-cols-5">
