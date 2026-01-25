@@ -6,13 +6,15 @@ import { generateClinicalReport } from '@/lib/reportGenerator';
 import {
   Upload, FileText, Brain, Activity, Loader2,
   AlertCircle, CheckCircle, Sparkles, TrendingUp,
-  FileSearch, Stethoscope, ChevronRight, MessageCircle, Copy, Check, Heart, Mic, MicOff, FileDown
+  FileSearch, Stethoscope, ChevronRight, MessageCircle, Copy, Check, Heart, Mic, MicOff, FileDown, Eye
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { clinicalAPI, type AnalysisResponse, type DiagnosisItem } from '@/lib/api';
 import { cn, formatConfidence } from '@/lib/utils';
 import ChatInterface from './components/ChatInterface';
 import NavBar from './components/NavBar';
+import FactViewer from './components/FactViewer';
+import SourceViewer from './components/SourceViewer';
 
 import DigitalAurora from '@/app/components/DigitalAurora';
 // Sample clinical note
@@ -59,6 +61,10 @@ export default function Home() {
   const [showAnalysisChat, setShowAnalysisChat] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [copied, setCopied] = useState(false);
+
+  // Explainable AI State
+  const [highlightedChunkIds, setHighlightedChunkIds] = useState<string[] | null>(null);
+  const [rightPanelTab, setRightPanelTab] = useState<'source' | 'chat'>('source');
 
   // Patient Friendly Mode
   const [patientLetter, setPatientLetter] = useState<string | null>(null);
@@ -440,7 +446,7 @@ export default function Home() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="max-w-5xl mx-auto"
+              className="max-w-7xl mx-auto"
             >
               {!result && !isAnalyzing && (
                 <div className="flex flex-col items-center justify-center p-12 glass rounded-3xl border border-slate-300 dark:border-slate-800">
@@ -533,12 +539,15 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="grid gap-6 lg:grid-cols-5">
-                    {/* Left Column: SOAP & Diagnosis */}
+                  <div className="grid gap-6 lg:grid-cols-5 h-[calc(100vh-12rem)] min-h-[600px]">
+                    {/* Left Column: Facts, SOAP & Diagnosis */}
                     <motion.div
                       layout
-                      className="lg:col-span-3 space-y-6"
+                      className="lg:col-span-3 space-y-6 overflow-y-auto pr-2 pb-12"
                     >
+
+                      {/* Extracted Facts with Explainable AI */}
+                      <FactViewer text={result.step1_facts} onHover={setHighlightedChunkIds} />
 
                       {/* Patient Letter Card (Conditional) */}
                       <AnimatePresence>
@@ -576,7 +585,7 @@ export default function Home() {
                         )}
                       </AnimatePresence>
 
-                      {/* SOAP Summary - Always here */}
+                      {/* SOAP Summary */}
                       <div className="glass rounded-2xl p-6 border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
@@ -600,12 +609,12 @@ export default function Home() {
                             )}
                           </button>
                         </div>
-                        <pre className="bg-slate-50 dark:bg-slate-950/50 rounded-xl p-5 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-mono leading-relaxed border border-slate-200 dark:border-slate-800">
+                        <pre className="bg-slate-5(0) dark:bg-slate-950/50 rounded-xl p-5 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-mono leading-relaxed border border-slate-200 dark:border-slate-800">
                           {result.soap}
                         </pre>
                       </div>
 
-                      {/* DDx List - Always Visible */}
+                      {/* DDx List */}
                       <div className="glass rounded-2xl p-6 border border-pink-500/30 shadow-lg shadow-pink-500/10">
                         <div className="flex items-center gap-3 mb-6">
                           <Activity className="w-5 h-5 text-pink-600 dark:text-pink-400" />
@@ -622,7 +631,10 @@ export default function Home() {
                                 key={idx}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                onClick={() => setSelectedDiagnosis(isSelected ? null : dx.diagnosis)}
+                                onClick={() => {
+                                  setSelectedDiagnosis(isSelected ? null : dx.diagnosis);
+                                  if (!isSelected && dx.evidence) setHighlightedChunkIds(dx.evidence);
+                                }}
                                 className={cn(
                                   "bg-white/60 dark:bg-slate-900/40 rounded-xl p-5 border cursor-pointer transition-all group",
                                   isSelected
@@ -694,10 +706,15 @@ export default function Home() {
                                     {/* Supporting Evidence */}
                                     {dx.evidence && dx.evidence.length > 0 && (
                                       <div>
-                                        <span className="text-xs font-semibold text-pink-600 dark:text-pink-400 block mb-2">📋 Supporting Evidence:</span>
+                                        <span className="text-xs font-semibold text-pink-600 dark:text-pink-400 block mb-2">📋 Supporting Evidence (Hover to highlight):</span>
                                         <div className="flex flex-wrap gap-2">
                                           {dx.evidence.map((chunkId, i) => (
-                                            <span key={i} className="px-2 py-1 bg-pink-50 dark:bg-pink-500/10 border border-pink-200 dark:border-pink-500/20 rounded text-xs text-pink-600 dark:text-pink-300 font-mono">
+                                            <span
+                                              key={i}
+                                              onMouseEnter={() => setHighlightedChunkIds([chunkId])}
+                                              onMouseLeave={() => setHighlightedChunkIds(null)}
+                                              className="px-2 py-1 bg-pink-50 dark:bg-pink-500/10 border border-pink-200 dark:border-pink-500/20 rounded text-xs text-pink-600 dark:text-pink-300 font-mono cursor-pointer hover:bg-pink-100 hover:scale-105 transition-all"
+                                            >
                                               {chunkId}
                                             </span>
                                           ))}
@@ -714,51 +731,64 @@ export default function Home() {
 
                     </motion.div>
 
-                    {/* Right Column: Chat (Desktop) */}
+                    {/* Right Column: Source & Chat */}
                     <div className="hidden lg:block lg:col-span-2">
-                      <div className="sticky top-28 space-y-4">
-                        <AnimatePresence mode="wait">
-                          {!showAnalysisChat ? (
-                            <motion.div
-                              key="start-chat"
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              className="glass rounded-2xl p-6 border border-purple-500/30 shadow-lg shadow-purple-500/10 text-center"
-                            >
-                              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center mx-auto mb-4 border border-purple-500/20">
-                                <MessageCircle className="w-8 h-8 text-purple-400" />
-                              </div>
-                              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Have Questions?</h3>
-                              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-                                Chat with the AI to explore the diagnosis, ask about parameters, or request further explanations.
-                              </p>
-                              <button
-                                onClick={() => setShowAnalysisChat(true)}
-                                className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg shadow-purple-500/25 transition-all flex items-center justify-center gap-2 group"
+                      <div className="sticky top-28 h-full flex flex-col">
+
+                        {/* Tab Switcher */}
+                        <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl mb-4 shrink-0">
+                          <button
+                            onClick={() => setRightPanelTab('source')}
+                            className={cn(
+                              "flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2",
+                              rightPanelTab === 'source'
+                                ? "bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400"
+                                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                            )}
+                          >
+                            <Eye className="w-4 h-4" />
+                            Source Context
+                          </button>
+                          <button
+                            onClick={() => setRightPanelTab('chat')}
+                            className={cn(
+                              "flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2",
+                              rightPanelTab === 'chat'
+                                ? "bg-white dark:bg-slate-700 shadow-sm text-purple-600 dark:text-purple-400"
+                                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                            )}
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            Analysis Chat
+                          </button>
+                        </div>
+
+                        {/* Panel Content */}
+                        <div className="flex-1 overflow-hidden relative min-h-[500px] border border-slate-200 dark:border-white/5 rounded-2xl bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm">
+                          <AnimatePresence mode="wait">
+                            {rightPanelTab === 'source' ? (
+                              <motion.div
+                                key="source"
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                className="absolute inset-0"
                               >
-                                <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                Start Chatting
-                              </button>
-                            </motion.div>
-                          ) : (
-                            <motion.div
-                              key="chat-interface"
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              className="relative"
-                            >
-                              <button
-                                onClick={() => setShowAnalysisChat(false)}
-                                className="absolute -top-3 -right-3 z-50 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-white rounded-full p-1.5 border border-slate-300 dark:border-slate-600 shadow-md hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                                <SourceViewer chunks={result.all_chunks} highlightedIds={highlightedChunkIds} />
+                              </motion.div>
+                            ) : (
+                              <motion.div
+                                key="chat"
+                                initial={{ opacity: 0, x: 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                className="absolute inset-0"
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                              </button>
-                              <ChatInterface analysisData={result} visible={true} llmMode={llmMode} />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                                <ChatInterface analysisData={result} visible={true} llmMode={llmMode} />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </div>
                     </div>
                   </div>
