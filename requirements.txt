@@ -9,3 +9,9 @@ tqdm
 requests
 torch
 transformers[torch]
+fastapi
+uvicorn
+pydantic
+python-multipart
+groq
+google-generativeai
