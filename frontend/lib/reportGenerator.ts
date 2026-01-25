@@ -14,7 +14,7 @@ export const generateClinicalReport = (data: AnalysisResponse) => {
 
     doc.setFontSize(22);
     doc.setTextColor(255, 255, 255);
-    doc.text('Medox Clinical Report', 14, 25);
+    doc.text('NeuroMed Clinical Report', 14, 25);
 
     doc.setFontSize(10);
     doc.setTextColor(200, 200, 200);
@@ -78,8 +78,8 @@ export const generateClinicalReport = (data: AnalysisResponse) => {
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
         doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
-        doc.text('Medox AI v2.0', 14, doc.internal.pageSize.height - 10);
+        doc.text('NeuroMed AI v2.0', 14, doc.internal.pageSize.height - 10);
     }
 
-    doc.save(`Medox_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+    doc.save(`NeuroMed_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
 };

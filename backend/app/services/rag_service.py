@@ -512,7 +512,8 @@ def call_ollama(system_prompt: str, user_prompt: str, max_tokens: int = 512, tem
     import requests
     
     try:
-        url = "http://localhost:11434/api/generate"
+        # Use 127.0.0.1 instead of localhost to avoid IPv6 resolution issues
+        url = "http://127.0.0.1:11434/api/generate"
         
         # Combine system and user prompts for Ollama
         full_prompt = f"{system_prompt}\n\n{user_prompt}"

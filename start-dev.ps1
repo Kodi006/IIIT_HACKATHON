@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
-# Medox - Development Startup Script
+# NeuroMed - Development Startup Script
 
-Write-Host "Starting Medox v2.0..." -ForegroundColor Cyan
+Write-Host "Starting NeuroMed v2.0..." -ForegroundColor Cyan
 Write-Host "====================================`n" -ForegroundColor Cyan
 
 # Get workspace path

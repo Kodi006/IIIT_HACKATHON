@@ -1,4 +1,4 @@
-# Medox: Comprehensive Project Documentation
+# NeuroMed: Comprehensive Project Documentation
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@
 
 ## System Overview
 
-The **Medox** is an AI-powered clinical decision support system that helps healthcare professionals analyze clinical notes and generate differential diagnoses using **Retrieval-Augmented Generation (RAG)** technology. It combines natural language processing, vector search, and large language models to provide evidence-based clinical insights.
+The **NeuroMed** is an AI-powered clinical decision support system that helps healthcare professionals analyze clinical notes and generate differential diagnoses using **Retrieval-Augmented Generation (RAG)** technology. It combines natural language processing, vector search, and large language models to provide evidence-based clinical insights.
 
 ### What It Does
 
@@ -1450,7 +1450,7 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 
 ## Conclusion
 
-The **Medox** demonstrates how Retrieval-Augmented Generation (RAG) can be applied to clinical decision support, combining the power of large language models with the safety and transparency of evidence-based reasoning.
+The **NeuroMed** demonstrates how Retrieval-Augmented Generation (RAG) can be applied to clinical decision support, combining the power of large language models with the safety and transparency of evidence-based reasoning.
 
 ### Key Achievements
 
@@ -1570,7 +1570,7 @@ Diagnosis → Rationale → [evidence: chunk_id] → Chunk → Section → Origi
 
 **Document Version**: 1.0  
 **Last Updated**: November 1, 2025  
-**Author**: Medox Development Team  
+**Author**: NeuroMed Development Team  
 **License**: Educational/Research Use Only
 
 **For Questions or Contributions**: [GitHub Repository - Kodi006/IIIT_HACKATHON]

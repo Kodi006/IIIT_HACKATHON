@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
-# Medox - Complete Setup Script
+# NeuroMed - Complete Setup Script
 
-Write-Host "Medox v2.0 - Setup Script" -ForegroundColor Cyan
+Write-Host "NeuroMed v2.0 - Setup Script" -ForegroundColor Cyan
 Write-Host "========================================`n" -ForegroundColor Cyan
 
 # Check prerequisites
