@@ -629,6 +629,10 @@ def call_llm(system_prompt: str, user_prompt: str, max_tokens: int = 512, temper
     """
     if llm_mode == "ollama":
         return call_ollama(system_prompt, user_prompt, max_tokens, temperature)
+    elif llm_mode == "groq":
+        return call_groq(system_prompt, user_prompt, max_tokens, temperature)
+    elif llm_mode == "gemini":
+        return call_gemini(system_prompt, user_prompt, max_tokens, temperature)
     elif llm_mode == "colab_t4":
         return call_colab_t4(system_prompt, user_prompt, max_tokens, temperature)
     else:
