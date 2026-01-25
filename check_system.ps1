@@ -1,6 +1,6 @@
-# System Check Script for Medox
+# System Check Script for NeuroMed
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Medox - System Check" -ForegroundColor Cyan
+Write-Host "NeuroMed - System Check" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 

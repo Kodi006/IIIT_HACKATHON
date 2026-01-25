@@ -7,7 +7,7 @@ import { ThemeProvider } from './components/ThemeProvider'
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Medox - AI-Powered Clinical Decision Support',
+  title: 'NeuroMed - AI-Powered Clinical Decision Support',
   description: 'Modern clinical decision support system with RAG-powered analysis',
 }
 

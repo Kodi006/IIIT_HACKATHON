@@ -256,7 +256,7 @@ export default function Home() {
 
               <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 via-fuchsia-500 to-pink-500 dark:from-cyan-400 dark:via-fuchsia-400 dark:to-pink-400 animate-gradient">
-                  Medox
+                  NeuroMed
                 </span>
                 <span className="block text-2xl md:text-3xl mt-4 text-slate-500 dark:text-slate-500 font-normal">
                   Next-Gen Decision Support

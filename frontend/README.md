@@ -1,6 +1,6 @@
-# Medox Frontend
+# NeuroMed Frontend
 
-Modern, stunning web interface for the Medox AI system.
+Modern, stunning web interface for the NeuroMed AI system.
 
 ## Built With
 
