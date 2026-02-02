@@ -3,15 +3,37 @@
 ## Table of Contents
 
 1. [System Overview](#system-overview)
-2. [Architecture](#architecture)
-3. [Core Components](#core-components)
-4. [Technology Stack](#technology-stack)
-5. [Data Flow](#data-flow)
+2. [Quick Start](#quick-start)
+3. [Architecture](#architecture)
+4. [Core Components](#core-components)
+5. [Technology Stack](#technology-stack)
 6. [Implementation Details](#implementation-details)
 7. [Features](#features)
-8. [Limitations & Disclaimers](#limitations--disclaimers)
-9. [Educational Value](#educational-value)
-10. [Future Enhancements](#future-enhancements)
+8. [Future Enhancements](#future-enhancements)
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- **Python 3.10+**
+- **Node.js 18+**
+- **Ollama** (for local inference) running `llama3.2`
+
+### Installation
+
+1.  **Clone & Setup**:
+    ```powershell
+    ./setup.ps1
+    ```
+2.  **Run Application**:
+    ```powershell
+    ./start-dev.ps1
+    ```
+3.  **Access**:
+    - Frontend: `http://localhost:3000`
+    - Backend Docs: `http://localhost:8000/docs`
 
 ---
 
@@ -21,10 +43,11 @@ The **NeuroMed** is an AI-powered clinical decision support system that helps he
 
 ### What It Does
 
-- **Analyzes clinical notes** (text or images via OCR)
+- **Analyzes clinical notes** (Multi-modal: Text, Voice Dictation, OCR)
 - **Extracts structured facts** (demographics, symptoms, vitals, labs)
-- **Generates differential diagnoses** with confidence levels
+- **Generates differential diagnoses** with confidence levels & red flags
 - **Creates SOAP notes** (Subjective, Objective, Assessment, Plan)
+- **Patient Empathy Mode**: "Explain Like I'm 5" translation for patient communication
 - **Provides evidence traceability** linking diagnoses to source text
 
 ### Key Innovation
@@ -81,7 +104,7 @@ Uses RAG to ground AI responses in actual clinical documentation, preventing hal
          │
          ▼
 ┌─────────────────┐
-│  Streamlit UI   │ (Results + Traceability)
+│  Next.js UI     │ (Dashboard + Dictation)
 └─────────────────┘
 ```
 
@@ -712,17 +735,14 @@ with st.expander("📚 Retrieved Chunks (Debug)"):
 
 ### Core Dependencies
 
-| Package                 | Version | Size   | Purpose                  |
-| ----------------------- | ------- | ------ | ------------------------ |
-| `streamlit`             | Latest  | ~50MB  | Web UI framework         |
-| `sentence-transformers` | Latest  | ~400MB | Text embeddings          |
-| `faiss-cpu`             | Latest  | ~30MB  | Vector similarity search |
-| `pytesseract`           | Latest  | ~5MB   | OCR engine               |
-| `pillow`                | Latest  | ~10MB  | Image processing         |
-| `openai`                | Latest  | ~5MB   | GPT API client           |
-| `python-dotenv`         | Latest  | <1MB   | Environment config       |
-| `tqdm`                  | Latest  | <1MB   | Progress bars            |
-| `requests`              | Latest  | <1MB   | HTTP client              |
+| Package                 | Version | Purpose                  |
+| ----------------------- | ------- | ------------------------ |
+| `next.js`               | 15.1    | Frontend Dashboard       |
+| `fastapi`               | Latest  | Backend API Server       |
+| `sentence-transformers` | Latest  | Text embeddings          |
+| `faiss-cpu`             | Latest  | Vector similarity search |
+| `pytesseract`           | Latest  | OCR engine               |
+| `requests`              | Latest  | HTTP client              |
 
 **Total Install Size**: ~500MB (down from 3.5GB with transformers/torch)
 
@@ -1130,66 +1150,73 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 ### ✅ Implemented
 
 1. **Multi-Modal Input**
-   - Text entry
+   - **Voice Dictation** (Web Speech API)
+   - Text entry & Paste from clipboard
    - Image upload with OCR
-   - Paste from clipboard
 
-2. **Section-Aware Parsing**
+2. **Patient Empathy Mode**
+   - "Explain Like I'm 5" translation
+   - Generates patient letters
+
+3. **Hybrid Support**
+   - Ollama (Local) & Colab T4 (Remote)
+
+4. **Section-Aware Parsing**
    - Detects 12+ standard clinical sections
    - HPI, PMH, Labs, Physical Exam, etc.
 
-3. **Hierarchical Chunking**
+5. **Hierarchical Chunking**
    - Respects section boundaries
    - 1500-char chunks with overlap
    - UUID-tagged for traceability
 
-4. **Vector Search**
+6. **Vector Search**
    - 768-dim embeddings (all-mpnet-base-v2)
    - FAISS cosine similarity
    - Top-K retrieval (configurable)
 
-5. **Two-Step LLM Reasoning**
+7. **Two-Step LLM Reasoning**
    - Step 1: Extract structured facts
    - Step 2: Generate differential diagnoses
    - Prevents hallucination
 
-6. **Structured Fact Extraction**
+8. **Structured Fact Extraction**
    - Demographics (age, gender)
    - 14+ symptom categories
    - 5 vital signs
    - 6 physical exam categories
    - 12+ laboratory tests
 
-7. **Differential Diagnosis Generation**
+9. **Differential Diagnosis Generation**
    - 15+ clinical condition patterns
    - Confidence levels (60-100%)
    - Evidence-based rationale
    - Chunk ID references
 
-8. **SOAP Note Generation**
-   - Subjective, Objective, Assessment, Plan
-   - Standardized clinical format
+10. **SOAP Note Generation**
+    - Subjective, Objective, Assessment, Plan
+    - Standardized clinical format
 
-9. **Evidence Traceability**
-   - Every diagnosis linked to source chunks
-   - Chunk ID → Section → Original text
-   - Transparent reasoning
+11. **Evidence Traceability**
+    - Every diagnosis linked to source chunks
+    - Chunk ID → Section → Original text
+    - Transparent reasoning
 
-10. **Interactive UI**
+12. **Interactive UI**
     - Clean Streamlit interface
     - Expandable sections
     - Debug panels
     - Copy-paste results
 
-11. **Two LLM Modes**
+13. **Two LLM Modes**
     - `local_stub`: Pattern matching (no API, no cost)
     - `openai`: GPT-4/3.5 (requires API key)
 
-12. **Pre-loaded Sample**
+14. **Pre-loaded Sample**
     - Meningitis clinical case
     - Demonstrates full pipeline
 
-13. **Lightweight**
+15. **Lightweight**
     - 500MB install (vs 3.5GB)
     - CPU-only (no GPU needed)
     - Fast inference
@@ -1403,23 +1430,19 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 
 ### Low Priority
 
-11. **Voice Input**
-    - Speech-to-text (Whisper)
-    - Dictation workflow
-
-12. **Real-Time Collaboration**
+11. **Real-Time Collaboration**
     - Multi-user editing
     - Comments and annotations
 
-13. **Analytics Dashboard**
+12. **Analytics Dashboard**
     - Track diagnosis patterns
     - Quality metrics
 
-14. **API Service**
+13. **API Service**
     - REST API for integration
     - Webhook support
 
-15. **HIPAA Compliance**
+14. **HIPAA Compliance**
     - Encryption at rest/transit
     - Audit logging
     - PHI de-identification
