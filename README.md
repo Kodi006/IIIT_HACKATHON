@@ -643,18 +643,10 @@ def lookup_chunk_text(chunk_id, chunks):
 
 #### D. UI Display
 
-Streamlit expandable sections show evidence:
+The Frontend displays evidence with interactive components:
 
-```python
-with st.expander("🔍 Evidence Traceability"):
-    for chunk_id in evidence_chunk_ids:
-        chunk_data = lookup_chunk_text(chunk_id, all_chunks)
-        if chunk_data:
-            st.markdown(f"**Chunk ID**: `{chunk_id}`")
-            st.markdown(f"**Section**: {chunk_data['section']}")
-            st.markdown(f"**Content**: {chunk_data['text']}")
-            st.markdown("---")
-```
+- **Expandable Cards**: Click to reveal source text.
+- **Traceability Links**: Highlighted text corresponds to specific chunks.
 
 **Why It Matters**:
 
@@ -665,9 +657,9 @@ with st.expander("🔍 Evidence Traceability"):
 
 ---
 
-### 10. Streamlit User Interface
+### 10. User Interface
 
-**Location**: Lines 540-710 in `hackathon.py`
+**Location**: `frontend/app/page.tsx`
 
 **Purpose**: Interactive web interface for clinical analysis
 
@@ -675,16 +667,19 @@ with st.expander("🔍 Evidence Traceability"):
 
 #### A. Input Panel
 
-```python
-# Text input
-clinical_text = st.text_area("Enter clinical note", height=300)
+- **Clinical Note Area**: Text area for pasting or typing notes.
+- **Voice Dictation**: Microphone button for speech-to-text.
+- **Image Upload**: Drag & drop zone for OCR processing.
 
 # Image upload
+
 uploaded_file = st.file_uploader("Upload image", type=["png", "jpg", "jpeg"])
 
 # LLM mode selector
+
 llm_mode = st.selectbox("LLM Mode", ["local_stub", "openai"])
-```
+
+````
 
 #### B. Analysis Display
 
@@ -705,7 +700,7 @@ if st.button("Analyze"):
         # Display SOAP
         st.subheader("📝 SOAP Note")
         st.markdown(result["soap"])
-```
+````
 
 #### C. Evidence Traceability Explorer
 
@@ -1036,11 +1031,11 @@ Lines 188-428: Local stub LLM (pattern matching)
   Lines 332-428:  extract_facts (demographics, symptoms, vitals, labs)
 Lines 444-478: Chunking logic (prepare_chunks_from_text)
 Lines 480-540: RAG pipeline (generate_summary_and_ddx)
-Lines 540-710: Streamlit UI
-  Lines 540-580:  Input panel
-  Lines 580-620:  Analysis display
-  Lines 620-660:  Evidence traceability
-  Lines 660-710:  Debug panels
+Lines 540-710: Frontend Logic (React/Next.js)
+  Lines 540-580:  Input components
+  Lines 580-620:  Result displays
+  Lines 620-660:  Evidence links
+  Lines 660-710:  Debug views
 ```
 
 ### Configuration Options (.env)
@@ -1072,30 +1067,12 @@ TESSERACT_PATH=C:\Program Files\Tesseract-OCR\tesseract.exe
 #### Option 1: PowerShell Auto-Setup
 
 ```powershell
-.\start.ps1
+.\start-dev.ps1
 ```
 
 #### Option 2: Manual Setup
 
-```powershell
-# 1. Create virtual environment
-python -m venv .venv
-
-# 2. Activate
-.\.venv\Scripts\Activate.ps1
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Run app
-streamlit run hackathon.py
-```
-
-#### Option 3: Direct Run (if .venv exists)
-
-```powershell
-& ".\.venv\Scripts\python.exe" -m streamlit run hackathon.py
-```
+See `QUICKSTART.md` for detailed manual setup instructions involving both Backend (FastAPI) and Frontend (Node.js).
 
 ### Troubleshooting
 
@@ -1203,7 +1180,7 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
     - Transparent reasoning
 
 12. **Interactive UI**
-    - Clean Streamlit interface
+    - Modern React interface (Next.js)
     - Expandable sections
     - Debug panels
     - Copy-paste results
@@ -1346,7 +1323,7 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
    - Error handling
 
 7. **UI/UX Design**
-   - Streamlit for rapid prototyping
+   - Next.js for modern web apps
    - Evidence traceability (transparency)
    - Debug panels for developers
 
@@ -1365,7 +1342,7 @@ TOP_K_RETRIEVAL=3  # Fewer retrievals
 3. **Software Engineers**
    - Build end-to-end AI applications
    - Integrate LLMs (OpenAI API)
-   - Deploy Streamlit apps
+   - Deploy Full-Stack apps
 
 4. **Clinical Informaticists**
    - Explore NLP for clinical text
@@ -1517,12 +1494,10 @@ python -m venv .venv                     # Create venv
 pip install -r requirements.txt          # Install deps
 
 # Run
-streamlit run hackathon.py               # Standard
-& ".\.venv\Scripts\python.exe" -m streamlit run hackathon.py  # Direct
+./start-dev.ps1                          # Start both Frontend & Backend
 
 # Check
-.\check_system.ps1                       # Verify system
-python -c "import streamlit; print(streamlit.__version__)"  # Check install
+./check_system.ps1                       # Verify system
 ```
 
 ### File Paths
@@ -1538,25 +1513,22 @@ python -c "import streamlit; print(streamlit.__version__)"  # Check install
 
 ### Code Locations
 
-| Feature           | Lines in hackathon.py |
-| ----------------- | --------------------- |
-| OCR               | 51-90                 |
-| Section Detection | 91-127                |
-| FAISS Indexing    | 128-166               |
-| OpenAI LLM        | 168-186               |
-| Local Stub LLM    | 188-428               |
-| Chunk Extraction  | 194-210               |
-| DDx Generation    | 216-330               |
-| Fact Extraction   | 332-428               |
-| Chunking          | 444-478               |
-| RAG Pipeline      | 480-540               |
-| Streamlit UI      | 540-710               |
+| Feature           | File Location                          |
+| ----------------- | -------------------------------------- |
+| OCR               | `backend/app/routes/ocr.py`            |
+| Section Detection | `backend/app/services/ocr_service.py`  |
+| FAISS Indexing    | `backend/app/services/rag_service.py`  |
+| LLM Logic         | `backend/app/services/chat_service.py` |
+| RAG Pipeline      | `backend/app/services/rag_service.py`  |
+| Formatting        | `backend/logic.py`                     |
+| Frontend UI       | `frontend/app/page.tsx`                |
+| Components        | `frontend/components/ui/`              |
 
 ### Configuration
 
 | Variable          | Default             | Purpose          |
 | ----------------- | ------------------- | ---------------- |
-| `LLM_MODE`        | `local_stub`        | LLM type         |
+| `LLM_MODE`        | `ollama`            | LLM Service      |
 | `EMBEDDING_MODEL` | `all-mpnet-base-v2` | Embedding model  |
 | `TOP_K_RETRIEVAL` | `5`                 | Chunks retrieved |
 | `CHUNK_SIZE`      | `1500`              | Chars per chunk  |
